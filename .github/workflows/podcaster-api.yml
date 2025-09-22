@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "src/**"
+      - "api/**"
       - ".github/workflows/main_podcasterapp.yml"
   workflow_dispatch:
 
