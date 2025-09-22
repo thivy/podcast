@@ -1,0 +1,3 @@
+POST http://localhost:7071/api/podcast/extractInsights
+
+< C:\Users\thivyruthra\Downloads\Montreal Flight Invoice.pdf

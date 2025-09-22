@@ -3,19 +3,23 @@ import {
   HttpHandler,
   HttpRequest,
   HttpResponseInit,
-  InvocationContext,
 } from "@azure/functions";
 import { debug } from "../common/debug";
+import { extractPodcastInsights } from "../services/extract-podcast-insights";
 
-export const extractPodcastInsightsHandler: HttpHandler = async (
-  request: HttpRequest,
-  context: InvocationContext
+const handler: HttpHandler = async (
+  request: HttpRequest
 ): Promise<HttpResponseInit> => {
   try {
-    const response = { message: "Hello from simpleSpeech function!" };
+    let arrayBuffer = await request.arrayBuffer();
+    const fileBuffer = Buffer.from(arrayBuffer);
+    const insights = await extractPodcastInsights({ data: fileBuffer });
+
+    const response = JSON.stringify(insights);
+
     return {
       status: 200,
-      body: JSON.stringify(response),
+      body: response,
       headers: {
         "Content-Type": "application/json",
       },
@@ -26,9 +30,9 @@ export const extractPodcastInsightsHandler: HttpHandler = async (
   }
 };
 
-app.http(extractPodcastInsightsHandler.name, {
-  methods: ["GET"],
+app.http(handler.name, {
+  methods: ["POST"],
   authLevel: "anonymous",
   route: "podcast/extractInsights",
-  handler: extractPodcastInsightsHandler,
+  handler: handler,
 });
