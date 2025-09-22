@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - "api/**"
-      - ".github/workflows/main_podcasterapp.yml"
   workflow_dispatch:
 
 env:
