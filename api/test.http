@@ -1,3 +1,5 @@
 POST http://localhost:7071/api/podcast/extractInsights
 
-< C:\Users\thivyruthra\Downloads\Montreal Flight Invoice.pdf
+{
+  "url": "https://learn.microsoft.com/en-us/azure/ai-services/content-understanding/quickstart/use-rest-api?tabs=document"
+}

@@ -5,21 +5,21 @@ import {
   HttpResponseInit,
 } from "@azure/functions";
 import { debug } from "../common/debug";
-import { extractPodcastInsights } from "../services/extract-podcast-insights";
+import {
+  extractAnalyzeOptions,
+  extractContentInsights,
+} from "../services/extract-content-insights";
 
 const handler: HttpHandler = async (
   request: HttpRequest
 ): Promise<HttpResponseInit> => {
   try {
-    let arrayBuffer = await request.arrayBuffer();
-    const fileBuffer = Buffer.from(arrayBuffer);
-    const insights = await extractPodcastInsights({ data: fileBuffer });
-
-    const response = JSON.stringify(insights);
+    const options = await extractAnalyzeOptions(request);
+    const insights = await extractContentInsights(options);
 
     return {
       status: 200,
-      body: response,
+      body: JSON.stringify(insights),
       headers: {
         "Content-Type": "application/json",
       },

@@ -113,17 +113,25 @@ export class ContentUnderstandingClient {
     const { source } = options;
 
     const analyzeUrl = this.buildAnalyzeUrl(options.analyzerType);
-    const binaryData = (source as RequestBody).data;
-    const body = JSON.stringify({
-      data: Buffer.from(binaryData).toString("base64"),
-    });
+    const binaryData = source.data;
+
+    let requestBody: {
+      url?: string;
+      data?: string;
+    } = {};
+
+    if (source.url) {
+      requestBody.url = source.url;
+    } else if (binaryData) {
+      requestBody.data = Buffer.from(binaryData).toString("base64");
+    }
 
     const submitResp = await this.fetcher(analyzeUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: body,
+      body: JSON.stringify(requestBody),
     });
 
     if (!submitResp.ok) {
