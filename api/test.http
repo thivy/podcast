@@ -1,5 +1,7 @@
-POST http://localhost:7071/api/podcast/extractInsights
+
+
+POST http://localhost:7071/api/podcast/writeScript
 
 {
-  "url": "https://learn.microsoft.com/en-us/azure/ai-services/content-understanding/quickstart/use-rest-api?tabs=document"
+  "topic": "The future of AI in healthcare"
 }
