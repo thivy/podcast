@@ -1,6 +1,6 @@
 import { OpenAIRealtimeWS } from "openai/beta/realtime/ws";
-import { azureOpenAIRealtime } from "../azure-services/azure-openai";
-import { debug } from "../common/debug";
+import { azureOpenAIRealtime } from "../../azure-services/azure-openai";
+import { debug } from "../../common/debug";
 
 const AZURE_OPENAI_AUDIO_SAMPLE_RATE = 24800;
 const TIMEOUT_AFTER_MS = 20000; // 20s
@@ -34,7 +34,7 @@ const SUPPORTED_VOICES: ReadonlySet<VoiceName> = new Set([
   "verse",
 ]);
 
-export const generateRealtimeAudio = async (
+export const createPodcastAudio = async (
   prompt: string,
   options?: {
     voice?: VoiceName; // voice name required for audio output

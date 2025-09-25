@@ -5,7 +5,7 @@ import {
   HttpResponseInit,
 } from "@azure/functions";
 import { debug } from "../common/debug";
-import { generateRealtimeAudio } from "../services/gpt-realtime";
+import { createPodcastAudio } from "../services/create-podcast-audio/create-podcast-audio";
 
 /**
  * HTTP POST /realtime/audio
@@ -33,7 +33,7 @@ const realtimeAudioHandler: HttpHandler = async (
       };
     }
 
-    const result = await generateRealtimeAudio(prompt, {});
+    const result = await createPodcastAudio(prompt, {});
     const body = Buffer.from(result.audioBase64, "base64");
     return {
       status: 200,
