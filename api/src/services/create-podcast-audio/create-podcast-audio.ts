@@ -53,19 +53,23 @@ export const createPodcastAudio = async (
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+
       try {
         realtimeClient.close();
       } catch (closeErr) {
         debug("Error closing realtime client", closeErr);
       }
+
       if (error) {
         reject(error);
         return;
       }
+
       if (audioChunks.length === 0) {
         reject(new Error("Realtime session produced no audio data"));
         return;
       }
+
       try {
         const { base64, bytes } = finalizeAudioBase64(audioChunks);
         resolve({ audioBase64: base64, bytes });
