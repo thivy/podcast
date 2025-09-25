@@ -18,23 +18,14 @@ const realtimeAudioHandler: HttpHandler = async (
   try {
     // Allow prompt via query (?prompt=) or JSON body { prompt }
     let prompt = request.query.get("prompt") || "";
-    if (!prompt) {
-      try {
-        const body: any = await request.json();
-        if (body && typeof body.prompt === "string") prompt = body.prompt;
-      } catch {
-        // ignore body parse errors for GET
-      }
-    }
-    if (!prompt) {
-      return {
-        status: 400,
-        body: "Missing 'prompt' (query ?prompt= or JSON body)",
-      };
-    }
 
-    const result = await createPodcastAudio(prompt, {});
+    const result = await createPodcastAudio({
+      prompt,
+      voice: "alloy",
+    });
+
     const body = Buffer.from(result.audioBase64, "base64");
+
     return {
       status: 200,
       body: body,

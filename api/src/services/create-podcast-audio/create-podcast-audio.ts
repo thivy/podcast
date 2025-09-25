@@ -23,15 +23,18 @@ export type VoiceName =
   | "shimmer"
   | "verse";
 
-export const createPodcastAudio = async (
-  prompt: string,
-  options?: {
-    voice?: VoiceName; // voice name required for audio output
-  }
-): Promise<RealtimeAudioResult> => {
-  if (!prompt || !prompt.trim()) throw new Error("Prompt is required");
+export type PodcastAudioOptions = {
+  prompt: string;
+  voice?: VoiceName; // voice name required for audio output
+};
 
+export const createPodcastAudio = async (
+  options: PodcastAudioOptions
+): Promise<RealtimeAudioResult> => {
+  const { prompt } = options;
   const voice = options?.voice || "alloy";
+
+  if (!prompt || !prompt.trim()) throw new Error("Prompt is required");
 
   const azureOpenAIClient = azureOpenAIRealtime();
   const realtimeClient = await OpenAIRealtimeWS.azure(azureOpenAIClient);
