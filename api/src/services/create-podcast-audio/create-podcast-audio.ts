@@ -23,17 +23,6 @@ export type VoiceName =
   | "shimmer"
   | "verse";
 
-const SUPPORTED_VOICES: ReadonlySet<VoiceName> = new Set([
-  "alloy",
-  "ash",
-  "ballad",
-  "coral",
-  "echo",
-  "sage",
-  "shimmer",
-  "verse",
-]);
-
 export const createPodcastAudio = async (
   prompt: string,
   options?: {
@@ -43,9 +32,6 @@ export const createPodcastAudio = async (
   if (!prompt || !prompt.trim()) throw new Error("Prompt is required");
 
   const voice = options?.voice || "alloy";
-  if (!SUPPORTED_VOICES.has(voice)) {
-    throw new Error(`Unsupported voice requested: ${voice}`);
-  }
 
   const azureOpenAIClient = azureOpenAIRealtime();
   const realtimeClient = await OpenAIRealtimeWS.azure(azureOpenAIClient);
