@@ -23,6 +23,17 @@ export type VoiceName =
   | "shimmer"
   | "verse";
 
+const SUPPORTED_VOICES: ReadonlySet<VoiceName> = new Set([
+  "alloy",
+  "ash",
+  "ballad",
+  "coral",
+  "echo",
+  "sage",
+  "shimmer",
+  "verse",
+]);
+
 export const generateRealtimeAudio = async (
   prompt: string,
   options?: {
@@ -32,81 +43,105 @@ export const generateRealtimeAudio = async (
   if (!prompt || !prompt.trim()) throw new Error("Prompt is required");
 
   const voice = options?.voice || "alloy";
+  if (!SUPPORTED_VOICES.has(voice)) {
+    throw new Error(`Unsupported voice requested: ${voice}`);
+  }
 
   const azureOpenAIClient = azureOpenAIRealtime();
   const realtimeClient = await OpenAIRealtimeWS.azure(azureOpenAIClient);
 
   const audioChunks: string[] = [];
-  let totalBytes = 0;
 
   return new Promise<RealtimeAudioResult>((resolve, reject) => {
-    let finished = false;
-    const finish = async () => {
-      if (finished) return;
-      finished = true;
-      try {
-        realtimeClient.close();
-      } catch {}
-      const { base64, bytes } = finalizeAudioBase64(audioChunks);
-      resolve({
-        audioBase64: base64,
-        bytes,
-      });
-    };
-
+    let settled = false;
     const timer = setTimeout(() => {
-      if (!finished) {
-        reject(new Error("Realtime session timed out"));
-        try {
-          realtimeClient.close();
-        } catch {}
-      }
+      settle(
+        new Error(`Realtime session timed out after ${TIMEOUT_AFTER_MS}ms`)
+      );
     }, TIMEOUT_AFTER_MS);
 
-    realtimeClient.on("error", (err) => {
+    const settle = (error?: Error) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
-      if (!finished) {
-        finished = true;
-        reject(err instanceof Error ? err : new Error(String(err)));
+      try {
+        realtimeClient.close();
+      } catch (closeErr) {
+        debug("Error closing realtime client", closeErr);
       }
+      if (error) {
+        reject(error);
+        return;
+      }
+      if (audioChunks.length === 0) {
+        reject(new Error("Realtime session produced no audio data"));
+        return;
+      }
+      try {
+        const { base64, bytes } = finalizeAudioBase64(audioChunks);
+        resolve({ audioBase64: base64, bytes });
+      } catch (conversionErr: any) {
+        reject(
+          conversionErr instanceof Error
+            ? conversionErr
+            : new Error(String(conversionErr))
+        );
+      }
+    };
+
+    realtimeClient.on("error", (err) => {
+      settle(err instanceof Error ? err : new Error(String(err)));
     });
 
     realtimeClient.on("session.created", () => {
       debug("Realtime session created");
     });
 
+    realtimeClient.on("error", (event: any) => {
+      debug("Realtime response error", event);
+      settle(
+        new Error(
+          event?.error?.message || "Realtime session reported an error response"
+        )
+      );
+    });
+
     realtimeClient.on("event", (event: any) => {
-      switch (event?.type) {
-        case "response.audio.delta":
-          if (event?.delta) {
-            audioChunks.push(event.delta);
-            try {
-              totalBytes += Buffer.from(event.delta, "base64").length;
-            } catch {}
-          }
-          break;
-        default:
-          break;
+      if (
+        event?.type === "response.audio.delta" &&
+        typeof event?.delta === "string"
+      ) {
+        audioChunks.push(event.delta);
       }
     });
 
     realtimeClient.on("response.done", () => {
-      clearTimeout(timer);
-      finish();
+      settle();
     });
 
-    realtimeClient.socket.on("close", () => {
-      clearTimeout(timer);
-      finish();
+    realtimeClient.socket.on("close", (code: number, reason: Buffer) => {
+      if (!settled) {
+        const message =
+          reason?.toString() || "Realtime session closed prematurely";
+        settle(
+          audioChunks.length
+            ? undefined
+            : new Error(`Realtime socket closed (${code}): ${message}`)
+        );
+      }
+    });
+
+    realtimeClient.socket.on("error", (socketErr: any) => {
+      settle(
+        socketErr instanceof Error ? socketErr : new Error(String(socketErr))
+      );
     });
 
     realtimeClient.socket.on("open", () => {
-      // Cast to any until SDK type definitions include audio_format
       realtimeClient.send({
         type: "session.update",
         session: {
           modalities: ["text", "audio"],
-          // model: deployment as any, TODO DO WE NEED THIS?
           voice,
         },
       });
@@ -119,6 +154,7 @@ export const generateRealtimeAudio = async (
           content: [{ type: "input_text", text: prompt }],
         },
       });
+
       realtimeClient.send({ type: "response.create" });
     });
   });
@@ -127,6 +163,9 @@ export const generateRealtimeAudio = async (
 export const finalizeAudioBase64 = (
   audioChunks: string[]
 ): { base64: string; bytes: number } => {
+  if (!audioChunks.length) {
+    throw new Error("No audio chunks to finalize");
+  }
   const joined = audioChunks.join("");
 
   if (joined.startsWith("UklGR"))

@@ -4,39 +4,38 @@ import {
 } from "@azure/identity";
 import { AzureOpenAI } from "openai";
 
+const credential = new DefaultAzureCredential();
+const scope = "https://cognitiveservices.azure.com/.default";
+const azureADTokenProvider = getBearerTokenProvider(credential, scope);
+
+const resolveEndpoint = () =>
+  `https://${AZURE_OPENAI_RESOURCE_NAME()}.cognitiveservices.azure.com/`;
+
+let cachedClient: AzureOpenAI | undefined;
+let cachedRealtimeClient: AzureOpenAI | undefined;
+
 export const azureOpenAI = () => {
-  const credential = new DefaultAzureCredential();
-  const scope = "https://cognitiveservices.azure.com/.default";
-  const azureADTokenProvider = getBearerTokenProvider(credential, scope);
-
-  const baseURL = `https://${AZURE_OPENAI_RESOURCE_NAME()}.openai.azure.com/openai/v1/`;
-
-  const apiVersion = "preview"; // TODO what version to use?
-  const azureOpenAIClient = new AzureOpenAI({
-    azureADTokenProvider,
-    baseURL,
-    apiVersion,
-  });
-
-  return azureOpenAIClient;
+  if (!cachedClient) {
+    cachedClient = new AzureOpenAI({
+      azureADTokenProvider,
+      apiVersion: AZURE_OPENAI_API_VERSION(),
+      deployment: AZURE_OPENAI_MODEL_NAME(),
+      endpoint: resolveEndpoint(),
+    });
+  }
+  return cachedClient;
 };
 
 export const azureOpenAIRealtime = () => {
-  const credential = new DefaultAzureCredential();
-  const scope = "https://cognitiveservices.azure.com/.default";
-  const azureADTokenProvider = getBearerTokenProvider(credential, scope);
-
-  const endpoint = `https://${AZURE_OPENAI_RESOURCE_NAME()}.cognitiveservices.azure.com/`;
-  const apiVersion = AZURE_OPENAI_REALTIME_API_VERSION();
-  const deployment = AZURE_OPENAI_REALTIME_DEPLOYMENT();
-  const azureOpenAIClient = new AzureOpenAI({
-    azureADTokenProvider,
-    apiVersion,
-    deployment,
-    endpoint,
-  });
-
-  return azureOpenAIClient;
+  if (!cachedRealtimeClient) {
+    cachedRealtimeClient = new AzureOpenAI({
+      azureADTokenProvider,
+      apiVersion: AZURE_OPENAI_REALTIME_API_VERSION(),
+      deployment: AZURE_OPENAI_REALTIME_DEPLOYMENT(),
+      endpoint: resolveEndpoint(),
+    });
+  }
+  return cachedRealtimeClient;
 };
 
 export const AZURE_OPENAI_RESOURCE_NAME = () => {
@@ -71,4 +70,12 @@ export const AZURE_OPENAI_MODEL_NAME = () => {
     throw new Error("Missing AZURE_OPENAI_MODEL_NAME env var");
   }
   return modelName;
+};
+
+export const AZURE_OPENAI_API_VERSION = () => {
+  const version = process.env.AZURE_OPENAI_API_VERSION || "preview";
+  if (!version) {
+    throw new Error("Missing AZURE_OPENAI_API_VERSION env var");
+  }
+  return version;
 };
