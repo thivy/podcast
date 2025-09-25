@@ -1,7 +1,15 @@
 
 
-POST http://localhost:7071/api/podcast/writeScript
+POST http://localhost:7071/api/podcast/extractInsights
 
 {
-  "topic": "The future of AI in healthcare"
+  "url": "https://www.woolworths.com.au/shop/productdetails/675490/woolworths-lamb-leg-steak"
+}
+
+### Realtime audio generation
+POST http://localhost:7071/api/realtime/audio
+Content-Type: application/json
+
+{
+  "prompt": "What is the population of the world?"
 }
