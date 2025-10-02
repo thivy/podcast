@@ -4,22 +4,19 @@ import {
   HttpRequest,
   HttpResponseInit,
 } from "@azure/functions";
+import df from "durable-functions";
 import { debug } from "../common/debug";
-import {
-  buildRequestBody,
-  extractContentInsights,
-} from "../services/extract-podcast-insights/extract-content-insights";
+import { PodcastScriptInput } from "../services/write-podcast-script/models";
 
-const handler: HttpHandler = async (
+const createPodcastHandler: HttpHandler = async (
   request: HttpRequest
 ): Promise<HttpResponseInit> => {
   try {
-    const requestBody = await buildRequestBody(request);
-    const insights = await extractContentInsights(requestBody);
+    let input: PodcastScriptInput = await request.json();
 
     return {
       status: 200,
-      body: JSON.stringify(insights),
+      body: JSON.stringify(input),
       headers: {
         "Content-Type": "application/json",
       },
@@ -30,9 +27,10 @@ const handler: HttpHandler = async (
   }
 };
 
-app.http(handler.name, {
-  methods: ["POST"],
+app.http(createPodcastHandler.name, {
+  methods: ["GET"],
+  route: "podcast",
   authLevel: "anonymous",
-  route: "podcast/extractInsights",
-  handler: handler,
+  extraInputs: [df.input.durableClient()],
+  handler: createPodcastHandler,
 });

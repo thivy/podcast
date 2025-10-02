@@ -4,7 +4,7 @@ import {
   azureOpenAI,
 } from "../../azure-services/azure-openai";
 import { generateInstruction } from "./instruction";
-import { podcastScriptSchema } from "./models";
+import { PodcastScriptSchema } from "./models";
 
 export const writePodcastScript = async (topic: string) => {
   const instructions = generateInstruction();
@@ -28,7 +28,7 @@ export const writePodcastScript = async (topic: string) => {
       },
     ],
     text: {
-      format: zodTextFormat(podcastScriptSchema, "script"),
+      format: zodTextFormat(PodcastScriptSchema, "script"),
     },
   });
 

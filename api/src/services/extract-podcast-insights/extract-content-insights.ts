@@ -6,7 +6,7 @@ import {
   RequestBody,
 } from "../../azure-services/azure-content-understanding";
 
-export const extractAnalyzeOptions = async (
+export const buildRequestBody = async (
   request: HttpRequest
 ): Promise<RequestBody> => {
   const clone = request.clone();

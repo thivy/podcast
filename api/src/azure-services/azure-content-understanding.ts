@@ -1,33 +1,47 @@
-export type RequestBody = {
-  url?: string; // URL to the file to be analyzed
-  data?: Buffer; // Base64-encoded file content
-};
+import { z } from "zod";
 
-export interface AnalyzeOptions {
-  source: RequestBody;
-  analyzerType: AnalyzerType;
-}
+export type RequestBody = z.infer<typeof RequestBodySchema>;
+export type AnalyzeOptions = z.infer<typeof AnalyzeOptionsSchema>;
 
-export type AnalyzerType =
-  | "prebuilt-documentAnalyzer"
-  | "prebuilt-imageAnalyzer"
-  | "prebuilt-audioAnalyzer"
-  | "prebuilt-videoAnalyzer"
-  | string;
+export type AnalyzerType = z.infer<typeof AnalyzerTypeSchema>;
+export type AnalyzeStatus = z.infer<typeof AnalyzeStatusSchema>;
 
-export type AnalyzeStatus = "Running" | "NotStarted" | "Succeeded";
+export type AnalyzeResult = z.infer<typeof AnalyzeResultSchema>;
 
-export type AnalyzeResult = {
-  id: string;
-  status: AnalyzeStatus;
-  result: {
-    analyzerId: AnalyzerType; // e.g., "prebuilt-documentAnalyzer"
-    apiVersion: string; // e.g., "2025-05-01-preview"
-    createdAt: string; // ISO date string
-    warnings: any[]; // array of warning objects (specify type if known)
-    contents: any[]; // array of content objects (specify type if known)
-  };
-};
+const RequestBodySchema = z
+  .object({
+    url: z.string().url().optional(),
+    data: z.instanceof(Buffer).optional(),
+  })
+  .refine((data) => data.url || data.data, {
+    message: "Either 'url' or 'data' must be provided",
+  });
+
+const AnalyzerTypeSchema = z.enum([
+  "prebuilt-documentAnalyzer",
+  "prebuilt-imageAnalyzer",
+  "prebuilt-audioAnalyzer",
+  "prebuilt-videoAnalyzer",
+]);
+
+const AnalyzeOptionsSchema = z.object({
+  source: RequestBodySchema,
+  analyzerType: AnalyzerTypeSchema,
+});
+
+const AnalyzeStatusSchema = z.enum(["Running", "NotStarted", "Succeeded"]);
+
+const AnalyzeResultSchema = z.object({
+  id: z.string(),
+  status: AnalyzeStatusSchema,
+  result: z.object({
+    analyzerId: AnalyzerTypeSchema, // e.g., "prebuilt-documentAnalyzer"
+    apiVersion: z.string(), // e.g., "2024-04-30"
+    createdAt: z.string(), // ISO date string
+    warnings: z.array(z.any()), // array of warning objects (specify type if known)
+    contents: z.array(z.any()), // array of content objects (specify type if known)
+  }),
+});
 
 const MAX_ATTEMPTS = 30;
 const MAX_DELAY_MS = 30000; // 30 seconds // TODO: make this configurable
