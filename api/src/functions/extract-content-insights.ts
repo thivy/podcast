@@ -8,7 +8,7 @@ import { debug } from "../common/debug";
 import {
   extractAnalyzeOptions,
   extractContentInsights,
-} from "../services/extract-content-insights";
+} from "../services/extract-podcast-insights/extract-content-insights";
 
 const handler: HttpHandler = async (
   request: HttpRequest

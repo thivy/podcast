@@ -4,7 +4,7 @@ import {
   ContentUnderstandingError,
   createContentUnderstandingClient,
   RequestBody,
-} from "../azure-services/azure-content-understanding";
+} from "../../azure-services/azure-content-understanding";
 
 export const extractAnalyzeOptions = async (
   request: HttpRequest

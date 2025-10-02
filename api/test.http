@@ -13,3 +13,8 @@ Content-Type: application/json
 {
   "prompt": "What is the population of the world?"
 }
+
+
+### Realtime audio generation
+POST http://localhost:7071/api/podcast/writeScript
+Content-Type: application/json
