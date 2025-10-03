@@ -136,7 +136,7 @@ export const createPodcastAudio = async (
           content: [
             {
               type: "input_text",
-              text: `Repeat after me and DO NOT ADD any other context before or after: ${podcastItem.conversation}`,
+              text: `You must say the following in Australian accent.Repeat after me and DO NOT ADD any other context before or after: ${podcastItem.conversation}`,
             },
           ],
         },
