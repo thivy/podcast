@@ -1,6 +1,8 @@
 import { OpenAIRealtimeWS } from "openai/beta/realtime/ws";
+import { z } from "zod";
 import { azureOpenAIRealtime } from "../../azure-services/azure-openai";
 import { debug } from "../../common/debug";
+import { VoiceNameSchema } from "../write-podcast-script/models";
 
 const AZURE_OPENAI_AUDIO_SAMPLE_RATE = 24800;
 const TIMEOUT_AFTER_MS = 20000; // 20s
@@ -13,28 +15,19 @@ export interface RealtimeAudioResult {
   bytes: number; // total decoded bytes length
 }
 
-export type VoiceName =
-  | "alloy"
-  | "ash"
-  | "ballad"
-  | "coral"
-  | "echo"
-  | "sage"
-  | "shimmer"
-  | "verse";
+const PodcastAudioOptionsSchema = z.object({
+  prompt: z.string().min(1, "Prompt is required"),
+  voice: VoiceNameSchema.optional().default("alloy"),
+});
 
-export type PodcastAudioOptions = {
-  prompt: string;
-  voice?: VoiceName; // voice name required for audio output
-};
+export type PodcastAudioOptions = z.infer<typeof PodcastAudioOptionsSchema>;
 
 export const createPodcastAudio = async (
   options: PodcastAudioOptions
 ): Promise<RealtimeAudioResult> => {
-  const { prompt } = options;
-  const voice = options?.voice || "alloy";
+  const validOptions = PodcastAudioOptionsSchema.parse(options);
 
-  if (!prompt || !prompt.trim()) throw new Error("Prompt is required");
+  const { prompt, voice } = validOptions;
 
   const azureOpenAIClient = azureOpenAIRealtime();
   const realtimeClient = await OpenAIRealtimeWS.azure(azureOpenAIClient);

@@ -1,10 +1,4 @@
-import {
-  app,
-  HttpHandler,
-  HttpRequest,
-  HttpResponseInit,
-} from "@azure/functions";
-import df from "durable-functions";
+import { HttpHandler, HttpRequest, HttpResponseInit } from "@azure/functions";
 import { debug } from "../common/debug";
 import { PodcastScriptInput } from "../services/write-podcast-script/models";
 
@@ -27,10 +21,10 @@ const createPodcastHandler: HttpHandler = async (
   }
 };
 
-app.http(createPodcastHandler.name, {
-  methods: ["GET"],
-  route: "podcast",
-  authLevel: "anonymous",
-  extraInputs: [df.input.durableClient()],
-  handler: createPodcastHandler,
-});
+// app.http(createPodcastHandler.name, {
+//   methods: ["GET"],
+//   route: "podcast",
+//   authLevel: "anonymous",
+//   extraInputs: [df.input.durableClient()],
+//   handler: createPodcastHandler,
+// });

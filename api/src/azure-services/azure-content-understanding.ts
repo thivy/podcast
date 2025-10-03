@@ -1,21 +1,12 @@
 import { z } from "zod";
+import { RequestBodySchema } from "../services/write-podcast-script/models";
 
-export type RequestBody = z.infer<typeof RequestBodySchema>;
 export type AnalyzeOptions = z.infer<typeof AnalyzeOptionsSchema>;
 
 export type AnalyzerType = z.infer<typeof AnalyzerTypeSchema>;
 export type AnalyzeStatus = z.infer<typeof AnalyzeStatusSchema>;
 
 export type AnalyzeResult = z.infer<typeof AnalyzeResultSchema>;
-
-const RequestBodySchema = z
-  .object({
-    url: z.string().url().optional(),
-    data: z.instanceof(Buffer).optional(),
-  })
-  .refine((data) => data.url || data.data, {
-    message: "Either 'url' or 'data' must be provided",
-  });
 
 const AnalyzerTypeSchema = z.enum([
   "prebuilt-documentAnalyzer",

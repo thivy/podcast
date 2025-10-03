@@ -3,26 +3,47 @@ import {
   AnalyzeOptions,
   ContentUnderstandingError,
   createContentUnderstandingClient,
-  RequestBody,
 } from "../../azure-services/azure-content-understanding";
+import {
+  RequestBody,
+  RequestBodySchema,
+  Style,
+  Tone,
+  VoiceName,
+} from "../write-podcast-script/models";
 
 export const buildRequestBody = async (
   request: HttpRequest
 ): Promise<RequestBody> => {
-  const clone = request.clone();
-  try {
-    const body: RequestBody = await clone.json();
-    const { url } = body;
-    if (url && typeof url === "string" && url.startsWith("http")) {
-      return { url };
-    }
-  } catch (err: any) {
-    let arrayBuffer = await clone.arrayBuffer();
-    const fileBuffer = Buffer.from(arrayBuffer);
-    return { data: fileBuffer };
+  // Handle multipart form data
+  const formData = await request.formData();
+  // Extract file
+  const file = formData.get("file") as unknown as File;
+  let fileBuffer: Buffer | undefined;
+
+  if (file) {
+    const arrayBuffer = await file.arrayBuffer();
+    fileBuffer = Buffer.from(arrayBuffer);
   }
 
-  throw new ContentUnderstandingError("Either url or data must be provided");
+  const url = formData.get("url") as string;
+
+  // Extract preferences
+  const voice = (formData.get("voice") as VoiceName) || undefined;
+  const style = (formData.get("style") as Style) || undefined;
+  const tone = (formData.get("tone") as Tone) || undefined;
+
+  const requestBody: RequestBody = {
+    url: url,
+    data: fileBuffer,
+    voice: voice,
+    style: style,
+    tone: tone,
+  };
+
+  // Validate with Zod
+  const validatedBody = RequestBodySchema.parse(requestBody);
+  return validatedBody;
 };
 
 export const extractContentInsights = async (options: RequestBody) => {

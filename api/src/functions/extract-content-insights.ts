@@ -4,18 +4,20 @@ import {
   HttpRequest,
   HttpResponseInit,
 } from "@azure/functions";
+import { ZodError } from "zod";
 import { debug } from "../common/debug";
-import {
-  buildRequestBody,
-  extractContentInsights,
-} from "../services/extract-podcast-insights/extract-content-insights";
+import { ValidationError } from "../common/error";
+import { createPodcast } from "../services/create-podcast/create-podcast";
+import { buildRequestBody } from "../services/extract-podcast-insights/extract-content-insights";
 
 const handler: HttpHandler = async (
   request: HttpRequest
 ): Promise<HttpResponseInit> => {
   try {
+    console.log("Request start");
     const requestBody = await buildRequestBody(request);
-    const insights = await extractContentInsights(requestBody);
+    console.log("Request Body:", requestBody);
+    const insights = await createPodcast(requestBody);
 
     return {
       status: 200,
@@ -25,6 +27,19 @@ const handler: HttpHandler = async (
       },
     };
   } catch (err: any) {
+    console.error("Error in handler:", err);
+    if (err instanceof ZodError) {
+      const zodError = new ValidationError("Request validation failed", err);
+
+      return {
+        status: 400,
+        body: JSON.stringify({ error: zodError.toJSON() }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+    }
+
     debug("Error in simpleSpeechHandler:", err);
     return { status: 500, body: String(err?.message || err) };
   }
