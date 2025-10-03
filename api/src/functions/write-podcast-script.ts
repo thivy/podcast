@@ -5,13 +5,12 @@ import {
   HttpResponseInit,
 } from "@azure/functions";
 import { debug } from "../common/debug";
-import { writePodcastScript } from "../services/write-podcast-script/write-podcast-script";
 
 const writePodcastScriptHandler: HttpHandler = async (
   request: HttpRequest
 ): Promise<HttpResponseInit> => {
   try {
-    const script = await writePodcastScript("The future of AI in healthcare");
+    const script = "";
 
     return {
       status: 200,

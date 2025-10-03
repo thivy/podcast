@@ -56,7 +56,17 @@ export const RequestBodySchema = z
     message: "Either 'url', 'data' or 'instruction' must be provided",
   });
 
+export const PodcastConfigSchema = z.object({
+  voice: VoiceNameSchema,
+  style: StyleSchema,
+  tone: ToneSchema,
+  speakers: z.number().min(1).max(2).default(1),
+  instruction: z.string().optional(),
+  transcript: z.string().min(1),
+});
+
 export type RequestBody = z.infer<typeof RequestBodySchema>;
+export type PodcastConfig = z.infer<typeof PodcastConfigSchema>;
 
 export type Tone = z.infer<typeof ToneSchema>;
 export type Style = z.infer<typeof StyleSchema>;

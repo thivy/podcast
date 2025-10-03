@@ -14,9 +14,7 @@ const handler: HttpHandler = async (
   request: HttpRequest
 ): Promise<HttpResponseInit> => {
   try {
-    console.log("Request start");
     const requestBody = await buildRequestBody(request);
-    console.log("Request Body:", requestBody);
     const insights = await createPodcast(requestBody);
 
     return {
