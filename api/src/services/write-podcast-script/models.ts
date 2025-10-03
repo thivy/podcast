@@ -34,8 +34,8 @@ const PodcastScriptInputSchema = z.object({
 
 const podcastScriptItemSchema = z.array(
   z.object({
-    speaker: z.enum(["speaker1", "speaker2"]).default("speaker1"),
-    conversation: z.string().min(1).max(500),
+    speaker: VoiceNameSchema.default("alloy"),
+    conversation: z.string().min(1).max(250),
   })
 );
 
