@@ -32,15 +32,13 @@ const PodcastScriptInputSchema = z.object({
   tone: ToneSchema,
 });
 
-const podcastScriptItemSchema = z.array(
-  z.object({
-    speaker: VoiceNameSchema.default("alloy"),
-    conversation: z.string().min(1).max(250),
-  })
-);
+export const podcastScriptItemSchema = z.object({
+  speaker: VoiceNameSchema.default("alloy"),
+  conversation: z.string().min(1),
+});
 
 export const PodcastScriptSchema = z.object({
-  script: podcastScriptItemSchema.min(4).max(12),
+  script: z.array(podcastScriptItemSchema),
 });
 
 export const RequestBodySchema = z
@@ -60,7 +58,8 @@ export const PodcastConfigSchema = z.object({
   voice: VoiceNameSchema,
   style: StyleSchema,
   tone: ToneSchema,
-  speakers: z.number().min(1).max(2).default(1),
+  linesPerSpeaker: z.number().min(1).max(10).default(3),
+  speakers: z.number().min(1).max(2).default(2),
   instruction: z.string().optional(),
   transcript: z.string().min(1),
 });
@@ -71,4 +70,7 @@ export type PodcastConfig = z.infer<typeof PodcastConfigSchema>;
 export type Tone = z.infer<typeof ToneSchema>;
 export type Style = z.infer<typeof StyleSchema>;
 export type VoiceName = z.infer<typeof VoiceNameSchema>;
+export type PodcastScript = z.infer<typeof PodcastScriptSchema>;
+export type PodcastScriptItem = z.infer<typeof podcastScriptItemSchema>;
+
 export type PodcastScriptInput = z.infer<typeof PodcastScriptInputSchema>;

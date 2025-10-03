@@ -5,7 +5,6 @@ import {
   HttpResponseInit,
 } from "@azure/functions";
 import { debug } from "../common/debug";
-import { createPodcastAudio } from "../services/create-podcast-audio/create-podcast-audio";
 
 /**
  * HTTP POST /realtime/audio
@@ -19,19 +18,19 @@ const realtimeAudioHandler: HttpHandler = async (
     // Allow prompt via query (?prompt=) or JSON body { prompt }
     let prompt = request.query.get("prompt") || "";
 
-    const result = await createPodcastAudio({
-      prompt,
-      voice: "alloy",
-    });
+    // const result = await createPodcastAudio({
+    //   prompt,
+    //   voice: "alloy",
+    // });
 
-    const body = Buffer.from(result.audioBase64, "base64");
+    // const body = Buffer.from(result.audioBase64, "base64");
 
     return {
       status: 200,
-      body: body,
+      // body: body,
       headers: {
         "Content-Type": "audio/wav",
-        "Content-Length": String(body.length),
+        // "Content-Length": String(body.length),
         "Content-Disposition": `inline; filename="realtime-audio.wav"`,
         "Cache-Control": "no-store",
       },

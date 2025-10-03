@@ -19,6 +19,11 @@ Create a ${config.style} podcast conversation with ${
 - Style: ${config.style}
 - Tone: ${config.tone}
 - Number of speakers: ${config.speakers}
+- Exactly ${config.linesPerSpeaker} lines per speaker ( ${
+    config.speakers * config.linesPerSpeaker
+  } lines total)
+- Each line should be 1-2 sentences long, with 150-200 characters per line
+- Total script under 10,000 characters, including punctuation
 - Each speaker should have a distinct voice and perspective
 - Dialogue should flow naturally with appropriate transitions
 - Include engaging hooks, questions, and insights that maintain listener interest
@@ -58,7 +63,6 @@ ${config.transcript}
 
 export const writePodcastScript = async (config: PodcastConfig) => {
   const instructions = buildPodcastPrompt(config);
-  console.log("Podcast Instructions:", instructions);
   const openai = azureOpenAI();
 
   const response = await openai.responses.parse({

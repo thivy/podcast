@@ -2,17 +2,20 @@ import { OpenAIRealtimeWS } from "openai/beta/realtime/ws";
 import { z } from "zod";
 import { azureOpenAIRealtime } from "../../azure-services/azure-openai";
 import { debug } from "../../common/debug";
-import { VoiceNameSchema } from "../write-podcast-script/models";
+import {
+  PodcastScriptItem,
+  podcastScriptItemSchema,
+  VoiceNameSchema,
+} from "../write-podcast-script/models";
 
 const AZURE_OPENAI_AUDIO_SAMPLE_RATE = 24800;
-const TIMEOUT_AFTER_MS = 20000; // 20s
+const TIMEOUT_AFTER_MS = 200000; // 200s
 
 /**
  * Aggregated realtime audio response
  */
 export interface RealtimeAudioResult {
-  audioBase64: string; // concatenated base64 payload (not yet converted to binary)
-  bytes: number; // total decoded bytes length
+  audioChunks: string[]; // concatenated base64 payload (not yet converted to binary)
 }
 
 const PodcastAudioOptionsSchema = z.object({
@@ -23,11 +26,10 @@ const PodcastAudioOptionsSchema = z.object({
 export type PodcastAudioOptions = z.infer<typeof PodcastAudioOptionsSchema>;
 
 export const createPodcastAudio = async (
-  options: PodcastAudioOptions
+  options: PodcastScriptItem
 ): Promise<RealtimeAudioResult> => {
-  const validOptions = PodcastAudioOptionsSchema.parse(options);
-
-  const { prompt, voice } = validOptions;
+  const validOptions = podcastScriptItemSchema.parse(options);
+  const { speaker, conversation } = validOptions;
 
   const azureOpenAIClient = azureOpenAIRealtime();
   const realtimeClient = await OpenAIRealtimeWS.azure(azureOpenAIClient);
@@ -36,16 +38,10 @@ export const createPodcastAudio = async (
 
   return new Promise<RealtimeAudioResult>((resolve, reject) => {
     let settled = false;
-    const timer = setTimeout(() => {
-      settle(
-        new Error(`Realtime session timed out after ${TIMEOUT_AFTER_MS}ms`)
-      );
-    }, TIMEOUT_AFTER_MS);
 
     const settle = (error?: Error) => {
       if (settled) return;
       settled = true;
-      clearTimeout(timer);
 
       try {
         realtimeClient.close();
@@ -64,8 +60,7 @@ export const createPodcastAudio = async (
       }
 
       try {
-        const { base64, bytes } = finalizeAudioBase64(audioChunks);
-        resolve({ audioBase64: base64, bytes });
+        resolve({ audioChunks });
       } catch (conversionErr: any) {
         reject(
           conversionErr instanceof Error
@@ -123,12 +118,12 @@ export const createPodcastAudio = async (
       );
     });
 
-    realtimeClient.socket.on("open", () => {
+    const sendToRealtimeClient = (podcastItem: PodcastScriptItem) => {
       realtimeClient.send({
         type: "session.update",
         session: {
           modalities: ["text", "audio"],
-          voice,
+          voice: podcastItem.speaker,
         },
       });
 
@@ -137,11 +132,21 @@ export const createPodcastAudio = async (
         item: {
           type: "message",
           role: "user",
-          content: [{ type: "input_text", text: prompt }],
+
+          content: [
+            {
+              type: "input_text",
+              text: `Repeat after me and DO NOT ADD any other context before or after: ${podcastItem.conversation}`,
+            },
+          ],
         },
       });
 
       realtimeClient.send({ type: "response.create" });
+    };
+
+    realtimeClient.socket.on("open", () => {
+      sendToRealtimeClient({ speaker, conversation });
     });
   });
 };
