@@ -34,11 +34,11 @@ const AnalyzeResultSchema = z.object({
   }),
 });
 
-const MAX_ATTEMPTS = 30;
-const MAX_DELAY_MS = 30000; // 30 seconds // TODO: make this configurable
+const MAX_ATTEMPTS = 100;
+const MAX_DELAY_MS = 3000; // 3 seconds
 
 export type ClientOptions = {
-  maxAttempts: number; // default 30
+  maxAttempts: number;
 };
 
 export class ContentUnderstandingClient {
@@ -149,6 +149,11 @@ export class ContentUnderstandingClient {
 
     // Service is expected to return a request id either in body or location header.
     return await submitResp.json();
+  }
+
+  async analyzeAndGetResults(options: AnalyzeOptions): Promise<AnalyzeResult> {
+    const submission = await this.analyze(options);
+    return await this.getAnalyzerResults(submission.id);
   }
 
   private fetcher(url: string, options: RequestInit): Promise<Response> {

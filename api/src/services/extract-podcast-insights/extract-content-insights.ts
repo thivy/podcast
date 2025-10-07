@@ -1,7 +1,6 @@
 import { HttpRequest } from "@azure/functions";
 import {
   AnalyzeOptions,
-  ContentUnderstandingError,
   createContentUnderstandingClient,
 } from "../../azure-services/azure-content-understanding";
 import {
@@ -49,17 +48,12 @@ export const buildRequestBody = async (
 export const extractContentInsights = async (options: RequestBody) => {
   const client = createContentUnderstandingClient();
 
-  if (!options.url && !options.data) {
-    throw new ContentUnderstandingError("Either url or data must be provided");
-  }
-
   const analyzeOptions: AnalyzeOptions = {
     analyzerType: "prebuilt-documentAnalyzer", // TODO: make this dynamic based on file type
     source: options,
   };
 
-  const result = await client.analyze(analyzeOptions);
-  const finalResult = await client.getAnalyzerResults(result.id);
+  const result = await client.analyzeAndGetResults(analyzeOptions);
 
-  return finalResult;
+  return result;
 };
