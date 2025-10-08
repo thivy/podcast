@@ -49,23 +49,15 @@ export const RequestBodySchema = z
     style: StyleSchema.optional().default("conversational"),
     tone: ToneSchema.optional().default("formal"),
     instruction: z.string().optional(),
+    linesPerSpeaker: z.number().min(1).max(10).default(3),
+    speakers: z.number().min(1).max(2).default(2),
+    transcript: z.string().min(1),
   })
   .refine((data) => data.url || data.data || data.instruction, {
     message: "Either 'url', 'data' or 'instruction' must be provided",
   });
 
-export const PodcastConfigSchema = z.object({
-  voice: VoiceNameSchema,
-  style: StyleSchema,
-  tone: ToneSchema,
-  linesPerSpeaker: z.number().min(1).max(10).default(3),
-  speakers: z.number().min(1).max(2).default(2),
-  instruction: z.string().optional(),
-  transcript: z.string().min(1),
-});
-
 export type RequestBody = z.infer<typeof RequestBodySchema>;
-export type PodcastConfig = z.infer<typeof PodcastConfigSchema>;
 
 export type Tone = z.infer<typeof ToneSchema>;
 export type Style = z.infer<typeof StyleSchema>;

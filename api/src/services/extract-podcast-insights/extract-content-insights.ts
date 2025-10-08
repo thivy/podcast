@@ -11,7 +11,7 @@ import {
   VoiceName,
 } from "../write-podcast-script/models";
 
-export const buildRequestBody = async (
+export const buildContentUnderstandingPayload = async (
   request: HttpRequest
 ): Promise<RequestBody> => {
   // Handle multipart form data

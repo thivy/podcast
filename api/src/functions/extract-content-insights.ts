@@ -8,13 +8,13 @@ import { ZodError } from "zod";
 import { debug } from "../common/debug";
 import { ValidationError } from "../common/error";
 import { createPodcast } from "../services/create-podcast/create-podcast";
-import { buildRequestBody } from "../services/extract-podcast-insights/extract-content-insights";
+import { buildContentUnderstandingPayload } from "../services/extract-podcast-insights/extract-content-insights";
 
 const handler: HttpHandler = async (
   request: HttpRequest
 ): Promise<HttpResponseInit> => {
   try {
-    const requestBody = await buildRequestBody(request);
+    const requestBody = await buildContentUnderstandingPayload(request);
     const insights = await createPodcast(requestBody);
 
     return {

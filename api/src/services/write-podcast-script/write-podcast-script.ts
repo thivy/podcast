@@ -3,9 +3,9 @@ import {
   AZURE_OPENAI_MODEL_NAME,
   azureOpenAI,
 } from "../../azure-services/azure-openai";
-import { PodcastConfig, PodcastScriptSchema } from "./models";
+import { PodcastScriptSchema, RequestBody } from "./models";
 
-const buildPodcastPrompt = (config: PodcastConfig) => {
+const buildPodcastPrompt = (config: RequestBody) => {
   return `
 You are an expert podcast script writer. Your task is to create an engaging, natural-sounding podcast conversation.
 
@@ -61,7 +61,7 @@ ${config.transcript}
 </output_requirements>`;
 };
 
-export const writePodcastScript = async (config: PodcastConfig) => {
+export const writePodcastScript = async (config: RequestBody) => {
   const instructions = buildPodcastPrompt(config);
   const openai = azureOpenAI();
 

@@ -10,7 +10,7 @@ export type SpeechSynthInput = {
 };
 
 // Returns the path to the saved WAV file
-export const createAudioBlob = async (
+export const synthesizeSpeechFromSsmlToBlob = async (
   input: SpeechSynthInput
 ): Promise<string> => {
   const outputFileName = `podcast-${randomUUID()}.wav`;
