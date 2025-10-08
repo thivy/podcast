@@ -18,9 +18,9 @@ Create a ${config.style} podcast conversation with ${
 <conversation_requirements>
 - Style: ${config.style}
 - Tone: ${config.tone}
-- Number of speakers: ${config.speakers}
+- Number of speakers: ${config.speakers.length}
 - Exactly ${config.linesPerSpeaker} lines per speaker ( ${
-    config.speakers * config.linesPerSpeaker
+    config.speakers.length * config.linesPerSpeaker
   } lines total)
 - Each line should be 1-2 sentences long, with 150-200 characters per line
 - Total script under 10,000 characters, including punctuation

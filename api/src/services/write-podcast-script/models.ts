@@ -1,15 +1,11 @@
 import { z } from "zod";
 
-export const VoiceNameSchema = z.enum([
-  "alloy",
-  "ash",
-  "ballad",
-  "coral",
-  "echo",
-  "sage",
-  "shimmer",
-  "verse",
-]);
+export const VoiceNameSchema = z.enum(["Drift", "Lumen", "Thorn", "Quill"]);
+// Drift – evokes motion, mystery, and natural flow.
+// Lumen – a measure of light, but also feels futuristic and ethereal.
+// Thorn – sharp, evocative, and layered with metaphor.
+// Myrrh – ancient, aromatic, and rich with spiritual undertones.
+// Quill – elegant, creative, and timeless.
 
 export const StyleSchema = z.enum([
   "conversational",
@@ -33,7 +29,7 @@ const PodcastScriptInputSchema = z.object({
 });
 
 export const podcastScriptItemSchema = z.object({
-  speaker: VoiceNameSchema.default("alloy"),
+  speaker: VoiceNameSchema.default("Drift"),
   conversation: z.string().min(1),
 });
 
@@ -45,12 +41,15 @@ export const RequestBodySchema = z
   .object({
     url: z.string().url().optional(),
     data: z.instanceof(Buffer).optional(),
-    voice: VoiceNameSchema.optional().default("alloy"),
     style: StyleSchema.optional().default("conversational"),
     tone: ToneSchema.optional().default("formal"),
     instruction: z.string().optional(),
     linesPerSpeaker: z.number().min(1).max(10).default(3),
-    speakers: z.number().min(1).max(2).default(2),
+    speakers: z
+      .array(VoiceNameSchema)
+      .min(1)
+      .max(2)
+      .default(["Drift", "Lumen"]),
     scriptContent: z.string().default(""),
   })
   .refine((data) => data.url || data.data || data.instruction, {

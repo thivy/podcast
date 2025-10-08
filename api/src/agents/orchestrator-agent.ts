@@ -17,14 +17,18 @@ export const podcastOrchestratorAgent: OrchestrationHandler = function* (
   context.df.setCustomStatus({ status: "EXTRACTING_CONTENT" });
   const input = context.df.getInput<RequestBody>();
 
-  const insights: AnalyzeResult = yield context.df.callActivity(
-    contentExtractorAgent.name,
-    input
-  );
+  // only send to content extractor if url or data is provided
+  if (input.url || input.data) {
+    const insights: AnalyzeResult = yield context.df.callActivity(
+      contentExtractorAgent.name,
+      input
+    );
+
+    input.scriptContent = insights.result?.contents[0].markdown || "";
+  }
 
   context.df.setCustomStatus({ status: "WRITING_SCRIPT" });
 
-  input.scriptContent = insights.result?.contents[0].markdown || "";
   const podcastScript: PodcastScript = yield context.df.callActivity(
     scriptWriterAgent.name,
     input

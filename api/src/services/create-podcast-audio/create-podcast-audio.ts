@@ -1,11 +1,9 @@
 import { OpenAIRealtimeWS } from "openai/beta/realtime/ws";
-import { z } from "zod";
 import { azureOpenAIRealtime } from "../../azure-services/azure-openai";
 import { debug } from "../../common/debug";
 import {
   PodcastScriptItem,
   podcastScriptItemSchema,
-  VoiceNameSchema,
 } from "../write-podcast-script/models";
 
 const AZURE_OPENAI_AUDIO_SAMPLE_RATE = 24800;
@@ -17,13 +15,6 @@ const TIMEOUT_AFTER_MS = 200000; // 200s
 export interface RealtimeAudioResult {
   audioChunks: string[]; // concatenated base64 payload (not yet converted to binary)
 }
-
-const PodcastAudioOptionsSchema = z.object({
-  prompt: z.string().min(1, "Prompt is required"),
-  voice: VoiceNameSchema.optional().default("alloy"),
-});
-
-export type PodcastAudioOptions = z.infer<typeof PodcastAudioOptionsSchema>;
 
 export const createPodcastAudio = async (
   options: PodcastScriptItem

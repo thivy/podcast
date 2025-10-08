@@ -29,19 +29,27 @@ export const buildContentUnderstandingPayload = async (
   const url = formData.get("url") as string;
 
   // Extract preferences
-  const voice = (formData.get("voice") as VoiceName) || undefined;
+  const speakersRaw =
+    typeof formData.getAll === "function" ? formData.getAll("voice") : [];
+  const speakers =
+    Array.isArray(speakersRaw) && speakersRaw.length > 0
+      ? (speakersRaw.filter(Boolean) as VoiceName[])
+      : undefined;
   const style = (formData.get("style") as Style) || undefined;
   const tone = (formData.get("tone") as Tone) || undefined;
+  const instruction = formData.get("instruction") as string;
 
   const requestBody: RequestBody = {
-    url: url,
+    url: url || undefined,
     data: fileBuffer,
-    voice: voice,
     style: style,
     tone: tone,
+    speakers: speakers,
+    instruction: instruction || undefined,
   };
 
   const validatedBody = RequestBodySchema.safeParse(requestBody);
+
   if (!validatedBody.success) {
     return new ZodError(validatedBody.error.errors);
   }
