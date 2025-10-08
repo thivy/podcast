@@ -51,7 +51,7 @@ export const RequestBodySchema = z
     instruction: z.string().optional(),
     linesPerSpeaker: z.number().min(1).max(10).default(3),
     speakers: z.number().min(1).max(2).default(2),
-    transcript: z.string().min(1),
+    scriptContent: z.string().default(""),
   })
   .refine((data) => data.url || data.data || data.instruction, {
     message: "Either 'url', 'data' or 'instruction' must be provided",

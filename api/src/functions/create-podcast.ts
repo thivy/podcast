@@ -2,19 +2,33 @@ import {
   app,
   HttpHandler,
   HttpRequest,
-  HttpResponse,
+  HttpResponseInit,
   InvocationContext,
 } from "@azure/functions";
 import * as df from "durable-functions";
+import { ZodError } from "zod";
 import { podcastOrchestratorAgent } from "../agents/orchestrator-agent";
+import { ValidationError } from "../common/error";
 import { buildContentUnderstandingPayload } from "../services/extract-podcast-insights/extract-content-insights";
 
 const podcastHttpStart: HttpHandler = async (
   request: HttpRequest,
   context: InvocationContext
-): Promise<HttpResponse> => {
+): Promise<HttpResponseInit> => {
   const client = df.getClient(context);
   const requestBody = await buildContentUnderstandingPayload(request);
+
+  if (requestBody instanceof ZodError) {
+    const zodError = new ValidationError(
+      "Request validation failed",
+      requestBody
+    );
+
+    return {
+      status: 400,
+      body: JSON.stringify({ error: zodError.toJSON() }),
+    };
+  }
 
   const instanceId: string = await client.startNew(
     podcastOrchestratorAgent.name,

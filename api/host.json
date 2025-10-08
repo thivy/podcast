@@ -16,9 +16,6 @@
     "durableTask": {
       "storageProvider": {
         "type": "AzureStorage"
-      },
-      "tracing": {
-        "distributedTracingEnabled": true
       }
     }
   }

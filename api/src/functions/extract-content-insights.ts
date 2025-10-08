@@ -15,6 +15,15 @@ const handler: HttpHandler = async (
 ): Promise<HttpResponseInit> => {
   try {
     const requestBody = await buildContentUnderstandingPayload(request);
+
+    if (requestBody instanceof ZodError) {
+      const zodError = new ValidationError(
+        "Request validation failed",
+        requestBody
+      );
+      throw zodError;
+    }
+
     const insights = await createPodcast(requestBody);
 
     return {

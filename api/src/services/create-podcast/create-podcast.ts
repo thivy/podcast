@@ -5,7 +5,7 @@ import { writePodcastScript } from "../write-podcast-script/write-podcast-script
 export const createPodcast = async (requestBody: RequestBody) => {
   const insights = await extractContentInsights(requestBody);
 
-  requestBody.transcript = insights.result?.contents[0].markdown || "";
+  requestBody.scriptContent = insights.result?.contents[0].markdown || "";
 
   const podcastScript = await writePodcastScript(requestBody);
 

@@ -46,9 +46,9 @@ ${config.instruction}
 `
     : ""
 }${
-    config.transcript && config.transcript.length > 0
+    config.scriptContent && config.scriptContent.length > 0
       ? `<source_material>
-${config.transcript}
+${config.scriptContent}
 </source_material>
 
 `

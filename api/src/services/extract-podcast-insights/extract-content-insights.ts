@@ -1,4 +1,5 @@
 import { HttpRequest } from "@azure/functions";
+import { ZodError } from "zod";
 import {
   AnalyzeOptions,
   createContentUnderstandingClient,
@@ -13,7 +14,7 @@ import {
 
 export const buildContentUnderstandingPayload = async (
   request: HttpRequest
-): Promise<RequestBody> => {
+): Promise<RequestBody | ZodError> => {
   // Handle multipart form data
   const formData = await request.formData();
   // Extract file
@@ -40,9 +41,11 @@ export const buildContentUnderstandingPayload = async (
     tone: tone,
   };
 
-  // Validate with Zod
-  const validatedBody = RequestBodySchema.parse(requestBody);
-  return validatedBody;
+  const validatedBody = RequestBodySchema.safeParse(requestBody);
+  if (!validatedBody.success) {
+    return new ZodError(validatedBody.error.errors);
+  }
+  return validatedBody.data;
 };
 
 export const extractContentInsights = async (options: RequestBody) => {

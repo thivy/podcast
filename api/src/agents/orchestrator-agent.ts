@@ -1,5 +1,6 @@
 import * as df from "durable-functions";
 import { OrchestrationContext, OrchestrationHandler } from "durable-functions";
+import { AnalyzeResult } from "../azure-services/azure-content-understanding";
 import { SpeechSynthInput } from "../services/create-podcast/create-audio";
 import {
   PodcastScript,
@@ -16,13 +17,14 @@ export const podcastOrchestratorAgent: OrchestrationHandler = function* (
   context.df.setCustomStatus({ status: "EXTRACTING_CONTENT" });
   const input = context.df.getInput<RequestBody>();
 
-  const insights = yield context.df.callActivity(
+  const insights: AnalyzeResult = yield context.df.callActivity(
     contentExtractorAgent.name,
     input
   );
 
   context.df.setCustomStatus({ status: "WRITING_SCRIPT" });
 
+  input.scriptContent = insights.result?.contents[0].markdown || "";
   const podcastScript: PodcastScript = yield context.df.callActivity(
     scriptWriterAgent.name,
     input
@@ -43,6 +45,7 @@ export const podcastOrchestratorAgent: OrchestrationHandler = function* (
 
   const speech = yield context.df.callActivity(speechAgent.name, speechInput);
 
+  context.df.setCustomStatus({ status: "COMPLETED" });
   return { podcastScript, podcastUrl: speech };
 };
 
