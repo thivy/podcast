@@ -61,7 +61,7 @@ ${config.scriptContent}
 </output_requirements>`;
 };
 
-export const writePodcastScript = async (config: RequestBody) => {
+export const createPodcastScript = async (config: RequestBody) => {
   const instructions = buildPodcastPrompt(config);
   const openai = azureOpenAI();
 

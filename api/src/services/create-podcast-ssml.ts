@@ -5,7 +5,7 @@ import {
 import { sanitizeSsml } from "../common/ssml-utils";
 import { PodcastScript } from "./models";
 
-export const writeSsml = async (script: PodcastScript) => {
+export const createPodcastSsml = async (script: PodcastScript) => {
   const prompt = `Create a VALID SSML for the script "${JSON.stringify(
     script
   )}". DO NOT include any extra commentary. 

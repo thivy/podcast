@@ -56,7 +56,7 @@ export const buildContentUnderstandingPayload = async (
   return validatedBody.data;
 };
 
-export const extractContentInsights = async (options: RequestBody) => {
+export const extractPodcastInsights = async (options: RequestBody) => {
   const client = createContentUnderstandingClient();
 
   const analyzeOptions: AnalyzeOptions = {

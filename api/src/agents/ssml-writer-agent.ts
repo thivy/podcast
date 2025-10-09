@@ -1,12 +1,12 @@
 import * as df from "durable-functions";
 import { ActivityHandler } from "durable-functions";
-import { writeSsml } from "../services/create-azure-speech-ssml";
+import { createPodcastSsml } from "../services/create-podcast-ssml";
 import { PodcastScript } from "../services/models";
 
 export const ssmlWriterAgent: ActivityHandler = async (
   input: PodcastScript
 ): Promise<string> => {
-  const ssml = await writeSsml(input);
+  const ssml = await createPodcastSsml(input);
   return ssml;
 };
 

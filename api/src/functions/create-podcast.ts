@@ -9,7 +9,7 @@ import * as df from "durable-functions";
 import { ZodError } from "zod";
 import { podcastOrchestratorAgent } from "../agents/orchestrator-agent";
 import { ValidationError } from "../common/error";
-import { buildContentUnderstandingPayload } from "../services/extract-content-insights";
+import { buildContentUnderstandingPayload } from "../services/extract-podcast-insights";
 
 const podcastHttpStart: HttpHandler = async (
   request: HttpRequest,
