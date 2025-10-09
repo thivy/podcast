@@ -9,7 +9,7 @@ import * as df from "durable-functions";
 import { ZodError } from "zod";
 import { podcastOrchestratorAgent } from "../agents/orchestrator-agent";
 import { ValidationError } from "../common/error";
-import { buildContentUnderstandingPayload } from "../services/extract-podcast-insights/extract-content-insights";
+import { buildContentUnderstandingPayload } from "../services/extract-content-insights";
 
 const podcastHttpStart: HttpHandler = async (
   request: HttpRequest,
@@ -40,7 +40,7 @@ const podcastHttpStart: HttpHandler = async (
 
 app.http(podcastHttpStart.name, {
   methods: ["POST"],
-  route: "hello",
+  route: "podcast",
   authLevel: "anonymous",
   extraInputs: [df.input.durableClient()],
   handler: podcastHttpStart,

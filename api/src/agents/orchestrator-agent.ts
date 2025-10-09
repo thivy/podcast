@@ -1,11 +1,8 @@
 import * as df from "durable-functions";
 import { OrchestrationContext, OrchestrationHandler } from "durable-functions";
 import { AnalyzeResult } from "../azure-services/azure-content-understanding";
-import { SpeechSynthInput } from "../services/create-podcast/create-audio";
-import {
-  PodcastScript,
-  RequestBody,
-} from "../services/write-podcast-script/models";
+import { SpeechSynthInput } from "../services/create-audio";
+import { PodcastScript, RequestBody } from "../services/models";
 import { contentExtractorAgent } from "./content-extractor-agent";
 import { scriptWriterAgent } from "./script-writer-agent";
 import { speechAgent } from "./speech-agent";

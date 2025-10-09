@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RequestBodySchema } from "../services/write-podcast-script/models";
+import { RequestBodySchema } from "../services/models";
 
 export type AnalyzeOptions = z.infer<typeof AnalyzeOptionsSchema>;
 

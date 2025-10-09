@@ -1,7 +1,7 @@
 import * as df from "durable-functions";
 import { ActivityHandler } from "durable-functions";
-import { writeSsml } from "../services/create-podcast/create-azure-speech-ssml";
-import { PodcastScript } from "../services/write-podcast-script/models";
+import { writeSsml } from "../services/create-azure-speech-ssml";
+import { PodcastScript } from "../services/models";
 
 export const ssmlWriterAgent: ActivityHandler = async (
   input: PodcastScript

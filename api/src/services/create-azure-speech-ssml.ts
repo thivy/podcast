@@ -1,14 +1,15 @@
 import {
   AZURE_OPENAI_MODEL_NAME,
   azureOpenAI,
-} from "../../azure-services/azure-openai";
-import { sanitizeSsml } from "../../common/ssml-utils";
-import { PodcastScript } from "../write-podcast-script/models";
+} from "../azure-services/azure-openai";
+import { sanitizeSsml } from "../common/ssml-utils";
+import { PodcastScript } from "./models";
 
 export const writeSsml = async (script: PodcastScript) => {
   const prompt = `Create a VALID SSML for the script "${JSON.stringify(
     script
-  )}". DO NOT include any extra commentary.
+  )}". DO NOT include any extra commentary. 
+The SSML should be well-formed and suitable for use with Azure Speech Services.
 `;
 
   const openai = azureOpenAI();
@@ -19,17 +20,8 @@ export const writeSsml = async (script: PodcastScript) => {
     input: prompt,
   });
 
-  const { ssml, modified, notes } = sanitizeSsml(response.output_text);
-  console.log(
-    "Raw SSML Response (truncated 500):",
-    response.output_text.slice(0, 500)
-  );
-  if (modified) {
-    console.log("SSML sanitized:", {
-      notes,
-      sanitizedPreview: ssml.slice(0, 300),
-    });
-  }
+  const { ssml } = sanitizeSsml(response.output_text);
+
   return ssml;
 };
 

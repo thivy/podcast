@@ -2,7 +2,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import {
   AZURE_OPENAI_MODEL_NAME,
   azureOpenAI,
-} from "../../azure-services/azure-openai";
+} from "../azure-services/azure-openai";
 import { PodcastScriptSchema, RequestBody } from "./models";
 
 const buildPodcastPrompt = (config: RequestBody) => {

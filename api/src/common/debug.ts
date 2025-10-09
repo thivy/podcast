@@ -1,5 +1,5 @@
 export const DEBUG_ENABLED = true;
-export const debug = (...args: any[]) => {
+export const logger = (...args: any[]) => {
   if (DEBUG_ENABLED) {
     console.log(...args);
   }

@@ -3,14 +3,14 @@ import { ZodError } from "zod";
 import {
   AnalyzeOptions,
   createContentUnderstandingClient,
-} from "../../azure-services/azure-content-understanding";
+} from "../azure-services/azure-content-understanding";
 import {
   RequestBody,
   RequestBodySchema,
   Style,
   Tone,
   VoiceName,
-} from "../write-podcast-script/models";
+} from "./models";
 
 export const buildContentUnderstandingPayload = async (
   request: HttpRequest

@@ -1,9 +1,10 @@
 import { randomUUID } from "crypto";
-import { synthesizeSpeechFromSsml } from "../../azure-services/azure-speech";
-import { uploadBufferToBlob } from "../../azure-services/azure-storage";
 
 import { promises as fs } from "fs";
 import * as path from "path";
+import { synthesizeSpeechFromSsml } from "../azure-services/azure-speech";
+import { uploadBufferToBlob } from "../azure-services/azure-storage";
+
 // Input type for the activity
 export type SpeechSynthInput = {
   ssml: string;
@@ -54,15 +55,11 @@ export async function writeWavFile(
     targetPath = targetPath + ".wav";
   }
 
-  // Resolve to absolute path (relative to process.cwd() if not absolute)
   const abs = path.isAbsolute(targetPath)
     ? targetPath
     : path.resolve(process.cwd(), targetPath);
 
-  // Ensure directory
   await fs.mkdir(path.dirname(abs), { recursive: true });
-
-  // Write file
   await fs.writeFile(abs, buffer);
 
   return { filePath: abs, bytes: buffer.length };
