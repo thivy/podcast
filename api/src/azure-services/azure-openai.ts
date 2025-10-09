@@ -4,20 +4,23 @@ import {
 } from "@azure/identity";
 import { AzureOpenAI } from "openai";
 
-const credential = new DefaultAzureCredential();
-const scope = "https://cognitiveservices.azure.com/.default";
-const azureADTokenProvider = getBearerTokenProvider(credential, scope);
-
 const resolveEndpoint = () =>
   `https://${AZURE_OPENAI_RESOURCE_NAME()}.cognitiveservices.azure.com/`;
 
 let cachedClient: AzureOpenAI | undefined;
 let cachedRealtimeClient: AzureOpenAI | undefined;
 
+export const getADTokenProvider = () => {
+  const credential = new DefaultAzureCredential();
+  const scope = "https://cognitiveservices.azure.com/.default";
+  const azureADTokenProvider = getBearerTokenProvider(credential, scope);
+  return azureADTokenProvider;
+};
+
 export const azureOpenAI = () => {
   if (!cachedClient) {
     cachedClient = new AzureOpenAI({
-      azureADTokenProvider,
+      azureADTokenProvider: getADTokenProvider(),
       apiVersion: AZURE_OPENAI_API_VERSION(),
       deployment: AZURE_OPENAI_MODEL_NAME(),
       endpoint: resolveEndpoint(),
@@ -29,7 +32,7 @@ export const azureOpenAI = () => {
 export const azureOpenAIRealtime = () => {
   if (!cachedRealtimeClient) {
     cachedRealtimeClient = new AzureOpenAI({
-      azureADTokenProvider,
+      azureADTokenProvider: getADTokenProvider(),
       apiVersion: AZURE_OPENAI_REALTIME_API_VERSION(),
       deployment: AZURE_OPENAI_REALTIME_DEPLOYMENT(),
       endpoint: resolveEndpoint(),
