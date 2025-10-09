@@ -7,9 +7,6 @@ import { AzureOpenAI } from "openai";
 const resolveEndpoint = () =>
   `https://${AZURE_OPENAI_RESOURCE_NAME()}.cognitiveservices.azure.com/`;
 
-let cachedClient: AzureOpenAI | undefined;
-let cachedRealtimeClient: AzureOpenAI | undefined;
-
 export const getADTokenProvider = () => {
   const credential = new DefaultAzureCredential();
   const scope = "https://cognitiveservices.azure.com/.default";
@@ -18,27 +15,21 @@ export const getADTokenProvider = () => {
 };
 
 export const azureOpenAI = () => {
-  if (!cachedClient) {
-    cachedClient = new AzureOpenAI({
-      azureADTokenProvider: getADTokenProvider(),
-      apiVersion: AZURE_OPENAI_API_VERSION(),
-      deployment: AZURE_OPENAI_MODEL_NAME(),
-      endpoint: resolveEndpoint(),
-    });
-  }
-  return cachedClient;
+  return new AzureOpenAI({
+    azureADTokenProvider: getADTokenProvider(),
+    apiVersion: AZURE_OPENAI_API_VERSION(),
+    deployment: AZURE_OPENAI_MODEL_NAME(),
+    endpoint: resolveEndpoint(),
+  });
 };
 
 export const azureOpenAIRealtime = () => {
-  if (!cachedRealtimeClient) {
-    cachedRealtimeClient = new AzureOpenAI({
-      azureADTokenProvider: getADTokenProvider(),
-      apiVersion: AZURE_OPENAI_REALTIME_API_VERSION(),
-      deployment: AZURE_OPENAI_REALTIME_DEPLOYMENT(),
-      endpoint: resolveEndpoint(),
-    });
-  }
-  return cachedRealtimeClient;
+  return new AzureOpenAI({
+    azureADTokenProvider: getADTokenProvider(),
+    apiVersion: AZURE_OPENAI_REALTIME_API_VERSION(),
+    deployment: AZURE_OPENAI_REALTIME_DEPLOYMENT(),
+    endpoint: resolveEndpoint(),
+  });
 };
 
 export const AZURE_OPENAI_RESOURCE_NAME = () => {
