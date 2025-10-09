@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+export const PodcastStatusSchema = z.enum([
+  "INITIALIZING",
+  "EXTRACTING_INSIGHTS",
+  "WRITING_SCRIPT",
+  "CONVERTING_SSML",
+  "CREATING_AUDIO",
+  "COMPLETED",
+  "FAILED",
+]);
+
+export type PodcastStatus = z.infer<typeof PodcastStatusSchema>;
+
 export const VoiceNameSchema = z.enum(["Drift", "Lumen", "Thorn", "Quill"]);
 // Drift – evokes motion, mystery, and natural flow.
 // Lumen – a measure of light, but also feels futuristic and ethereal.
