@@ -38,10 +38,10 @@ export async function synthesizeSpeechFromSsmlToFile(
       "output",
       `speech-${new Date().toISOString().replace(/[:.]/g, "-")}.wav`
     );
-  return writeWavFile(buffer, finalPath);
+  return writeWavFileToLocal(buffer, finalPath);
 }
 
-export async function writeWavFile(
+export async function writeWavFileToLocal(
   buffer: Buffer,
   targetPath: string
 ): Promise<{ filePath: string; bytes: number }> {
