@@ -5,11 +5,11 @@ import {
   createPodcastAudioFromSsmlToBlob,
 } from "../services/create-podcast-audio";
 
-export const speechAgent: ActivityHandler = async (
+export const azureSpeechAgent: ActivityHandler = async (
   input: SpeechSynthInput
 ): Promise<string> => {
   const blobUrl = await createPodcastAudioFromSsmlToBlob(input);
   return blobUrl;
 };
 
-df.app.activity(speechAgent.name, { handler: speechAgent });
+df.app.activity(azureSpeechAgent.name, { handler: azureSpeechAgent });

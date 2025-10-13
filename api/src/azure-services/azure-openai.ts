@@ -14,20 +14,19 @@ export const getADTokenProvider = () => {
   return azureADTokenProvider;
 };
 
-export const azureOpenAI = () => {
-  return new AzureOpenAI({
-    azureADTokenProvider: getADTokenProvider(),
-    apiVersion: AZURE_OPENAI_API_VERSION(),
-    deployment: AZURE_OPENAI_MODEL_NAME(),
-    endpoint: resolveEndpoint(),
-  });
+type AzureOpenAIConfig = {
+  deployment?: string;
+  apiVersion?: string;
 };
 
-export const azureOpenAIRealtime = () => {
+export const azureOpenAI = ({
+  deployment = AZURE_OPENAI_MODEL_NAME(),
+  apiVersion = AZURE_OPENAI_API_VERSION(),
+}: AzureOpenAIConfig = {}) => {
   return new AzureOpenAI({
     azureADTokenProvider: getADTokenProvider(),
-    apiVersion: AZURE_OPENAI_REALTIME_API_VERSION(),
-    deployment: AZURE_OPENAI_REALTIME_DEPLOYMENT(),
+    apiVersion,
+    deployment,
     endpoint: resolveEndpoint(),
   });
 };
@@ -40,22 +39,12 @@ export const AZURE_OPENAI_RESOURCE_NAME = () => {
   return resourceName;
 };
 
-export const AZURE_OPENAI_REALTIME_API_VERSION = () => {
-  const apiVersion =
-    process.env.AZURE_OPENAI_REALTIME_API_VERSION || "2024-10-01-preview";
-
-  if (!apiVersion) {
-    throw new Error("Missing AZURE_OPENAI_REALTIME_API_VERSION env var");
+export const AZURE_OPENAI_AUDIO_MODEL_NAME = () => {
+  const modelName = process.env.AZURE_OPENAI_AUDIO_MODEL_NAME;
+  if (!modelName) {
+    throw new Error("Missing AZURE_OPENAI_AUDIO_MODEL_NAME env var");
   }
-  return apiVersion;
-};
-
-export const AZURE_OPENAI_REALTIME_DEPLOYMENT = () => {
-  const deploymentName = process.env.AZURE_OPENAI_REALTIME_DEPLOYMENT;
-  if (!deploymentName) {
-    throw new Error("Missing AZURE_OPENAI_REALTIME_DEPLOYMENT env var");
-  }
-  return deploymentName;
+  return modelName;
 };
 
 export const AZURE_OPENAI_MODEL_NAME = () => {

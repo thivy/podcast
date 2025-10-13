@@ -12,12 +12,18 @@ export const PodcastStatusSchema = z.enum([
 
 export type PodcastStatus = z.infer<typeof PodcastStatusSchema>;
 
-export const VoiceNameSchema = z.enum(["Drift", "Lumen", "Thorn", "Quill"]);
-// Drift – evokes motion, mystery, and natural flow.
-// Lumen – a measure of light, but also feels futuristic and ethereal.
-// Thorn – sharp, evocative, and layered with metaphor.
-// Myrrh – ancient, aromatic, and rich with spiritual undertones.
-// Quill – elegant, creative, and timeless.
+export const VoiceNameSchema = z.enum([
+  "alloy",
+  "ash",
+  "ballad",
+  "coral",
+  "echo",
+  "sage",
+  "shimmer",
+  "verse",
+  "marin",
+  "cedar",
+]);
 
 export const StyleSchema = z.enum([
   "conversational",
@@ -40,9 +46,19 @@ const PodcastScriptInputSchema = z.object({
   tone: ToneSchema,
 });
 
+const conversationSchema = z.object({
+  content: z.string().min(1).describe("The content of the conversation"),
+  emotion: z
+    .string()
+    .min(1)
+    .describe(
+      "Required emotions like haha, laughter, sighs, surprise, whispering quietly. to make it more human"
+    ),
+});
+
 export const podcastScriptItemSchema = z.object({
-  speaker: VoiceNameSchema.default("Drift"),
-  conversation: z.string().min(1),
+  speaker: VoiceNameSchema.default("alloy"),
+  conversation: z.array(conversationSchema).min(1),
 });
 
 export const PodcastScriptSchema = z.object({
@@ -56,12 +72,8 @@ export const RequestBodySchema = z
     style: StyleSchema.optional().default("conversational"),
     tone: ToneSchema.optional().default("formal"),
     instruction: z.string().optional(),
-    linesPerSpeaker: z.number().min(1).max(10).default(3),
-    speakers: z
-      .array(VoiceNameSchema)
-      .min(1)
-      .max(2)
-      .default(["Drift", "Lumen"]),
+    linesPerSpeaker: z.number().optional(),
+    speakers: z.array(VoiceNameSchema).min(1).max(2).default(["alloy", "ash"]),
     scriptContent: z.string().default(""),
   })
   .refine((data) => data.url || data.data || data.instruction, {

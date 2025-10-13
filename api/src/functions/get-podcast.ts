@@ -10,8 +10,6 @@ export async function getPodcast(
   request: HttpRequest,
   context: InvocationContext
 ): Promise<HttpResponseInit> {
-  context.log(`Http function processed request for url "${request.url}"`);
-
   const name = request.params.name;
   if (!name) {
     return { status: 400, body: "Missing podcast name in route" };
