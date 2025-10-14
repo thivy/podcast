@@ -144,7 +144,7 @@ Core behavior:
       },
       {
         role: "user",
-        content: `${options.conversation}`,
+        content: `Repeat the exact same back to me: ${options.conversation}`,
       },
     ],
   });
