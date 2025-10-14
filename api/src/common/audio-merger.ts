@@ -1,8 +1,9 @@
 type DecodedWav = {
-  samples: Float32Array;
+  channels: Float32Array[];
   sampleRate: number;
   numChannels: number;
   bitsPerSample: number;
+  frameCount: number;
 };
 
 export class PureNodeAudioMerger {
@@ -31,10 +32,12 @@ export class PureNodeAudioMerger {
     });
 
     const merged = this.mergeFloatArrays(
-      decoded.map((d) => d.samples),
+      decoded,
       crossfadeSeconds,
       targetSampleRate
     );
+    this.applyEdgeFade(merged, targetSampleRate);
+    this.normalizeGain(merged);
 
     const wavBuffer = this.encodeWAV(merged, targetSampleRate);
     return wavBuffer.toString("base64");
@@ -110,83 +113,105 @@ export class PureNodeAudioMerger {
     const bytesPerSample = fmt.bitsPerSample / 8;
     const frameSize = bytesPerSample * fmt.numChannels;
     const frameCount = Math.floor(dataLength / frameSize);
-    const samples = new Float32Array(frameCount);
+    const channels: Float32Array[] = Array.from(
+      { length: fmt.numChannels },
+      () => new Float32Array(frameCount)
+    );
 
     for (let i = 0; i < frameCount; i++) {
       const frameOffset = dataOffset + i * frameSize;
-      let sampleValue = 0;
       for (let ch = 0; ch < fmt.numChannels; ch++) {
-        sampleValue += buffer.readInt16LE(frameOffset + ch * bytesPerSample);
+        channels[ch][i] =
+          buffer.readInt16LE(frameOffset + ch * bytesPerSample) / 32768;
       }
-      samples[i] = sampleValue / fmt.numChannels / 32768;
     }
-
     return {
-      samples,
+      channels,
       sampleRate: fmt.sampleRate,
       numChannels: fmt.numChannels,
       bitsPerSample: fmt.bitsPerSample,
+      frameCount,
     };
   }
 
   private mergeFloatArrays(
-    segments: Float32Array[],
+    segments: DecodedWav[],
     crossfadeSeconds: number,
     sampleRate: number
-  ): Float32Array {
+  ): Float32Array[] {
     if (segments.length === 0) {
-      return new Float32Array();
+      return [];
     }
 
     const baseCrossfade = Math.max(
       0,
       Math.floor(crossfadeSeconds * sampleRate)
     );
-    let totalLength = segments[0].length;
+    let totalLength = segments[0].frameCount;
     for (let i = 1; i < segments.length; i++) {
       const overlap = Math.min(
         baseCrossfade,
-        segments[i - 1].length,
-        segments[i].length
+        segments[i - 1].frameCount,
+        segments[i].frameCount
       );
-      totalLength += segments[i].length - overlap;
+      totalLength += segments[i].frameCount - overlap;
     }
 
-    const output = new Float32Array(totalLength);
-    output.set(segments[0], 0);
-    let writeOffset = segments[0].length;
+    const numChannels = segments[0].numChannels;
+    const output: Float32Array[] = Array.from(
+      { length: numChannels },
+      () => new Float32Array(totalLength)
+    );
+
+    for (let ch = 0; ch < numChannels; ch++) {
+      output[ch].set(segments[0].channels[ch], 0);
+    }
+
+    let writeOffset = segments[0].frameCount;
 
     for (let i = 1; i < segments.length; i++) {
       const current = segments[i];
       const overlap = Math.min(
         baseCrossfade,
-        segments[i - 1].length,
-        current.length
+        segments[i - 1].frameCount,
+        current.frameCount
       );
       const fadeStart = writeOffset - overlap;
 
-      for (let j = 0; j < overlap; j++) {
-        const fadeOut = 1 - j / overlap;
-        const fadeIn = j / overlap;
-        output[fadeStart + j] =
-          output[fadeStart + j] * fadeOut + current[j] * fadeIn;
+      if (overlap > 0) {
+        for (let j = 0; j < overlap; j++) {
+          const t = j / overlap;
+          const fadeOut = Math.cos(t * Math.PI * 0.5);
+          const fadeIn = Math.sin(t * Math.PI * 0.5);
+          for (let ch = 0; ch < numChannels; ch++) {
+            const existing = output[ch][fadeStart + j];
+            const incoming = current.channels[ch][j];
+            output[ch][fadeStart + j] = existing * fadeOut + incoming * fadeIn;
+          }
+        }
       }
 
-      const remainder = current.subarray(overlap);
-      output.set(remainder, writeOffset);
-      writeOffset += current.length - overlap;
+      for (let ch = 0; ch < numChannels; ch++) {
+        const remainder = current.channels[ch].subarray(overlap);
+        output[ch].set(remainder, writeOffset);
+      }
+      writeOffset += current.frameCount - overlap;
     }
 
     return output;
   }
 
-  private encodeWAV(samples: Float32Array, sampleRate: number): Buffer {
-    const numChannels = 1;
+  private encodeWAV(channels: Float32Array[], sampleRate: number): Buffer {
+    if (channels.length === 0) {
+      return Buffer.alloc(0);
+    }
+    const numChannels = channels.length;
     const bitsPerSample = 16;
     const bytesPerSample = bitsPerSample / 8;
     const blockAlign = numChannels * bytesPerSample;
     const byteRate = sampleRate * blockAlign;
-    const dataSize = samples.length * blockAlign;
+    const frameCount = channels[0].length;
+    const dataSize = frameCount * blockAlign;
     const buffer = Buffer.allocUnsafe(44 + dataSize);
 
     buffer.write("RIFF", 0);
@@ -204,13 +229,51 @@ export class PureNodeAudioMerger {
     buffer.writeUInt32LE(dataSize, 40);
 
     let offset = 44;
-    for (let i = 0; i < samples.length; i++) {
-      const clamped = Math.max(-1, Math.min(1, samples[i]));
-      const intSample = Math.round(clamped * 32767);
-      buffer.writeInt16LE(intSample, offset);
-      offset += bytesPerSample;
+    for (let i = 0; i < frameCount; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        const clamped = Math.max(-1, Math.min(1, channels[ch][i]));
+        const intSample = Math.round(clamped * 32767);
+        buffer.writeInt16LE(intSample, offset);
+        offset += bytesPerSample;
+      }
     }
 
     return buffer;
+  }
+
+  private applyEdgeFade(channels: Float32Array[], sampleRate: number) {
+    if (channels.length === 0) return;
+    const fadeSamples = Math.max(1, Math.floor(sampleRate * 0.008)); // ~8ms
+    for (const channel of channels) {
+      const limit = Math.min(fadeSamples, channel.length);
+      for (let i = 0; i < limit; i++) {
+        const fadeIn = (i + 1) / limit;
+        channel[i] *= fadeIn;
+        const tailIdx = channel.length - 1 - i;
+        if (tailIdx >= 0) {
+          const fadeOut = (i + 1) / limit;
+          channel[tailIdx] *= 1 - fadeOut;
+        }
+      }
+    }
+  }
+
+  private normalizeGain(channels: Float32Array[], target = 0.92) {
+    if (channels.length === 0) return;
+    let peak = 0;
+    for (const channel of channels) {
+      for (let i = 0; i < channel.length; i++) {
+        const val = Math.abs(channel[i]);
+        if (val > peak) peak = val;
+      }
+    }
+    if (peak <= 0) return;
+    const scale = target / peak;
+    if (scale >= 1) return; // already below target
+    for (const channel of channels) {
+      for (let i = 0; i < channel.length; i++) {
+        channel[i] *= scale;
+      }
+    }
   }
 }

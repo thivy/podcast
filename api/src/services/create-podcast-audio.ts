@@ -83,6 +83,7 @@ export const createPodcastWithGptAudio = async (options: {
   const bufferArray: string[] = [];
 
   const script = options.script;
+
   for (let i = 0; i < script.length; i++) {
     const line = script[i];
     for (let j = 0; j < line.conversation.length; j++) {
@@ -137,6 +138,23 @@ export const createPodcastLineWithGptAudio = async (
     deployment: AZURE_OPENAI_AUDIO_MODEL_NAME(),
   });
 
+  const systemPrompt = `You are an expert audio generator that processes emotion-tagged text.
+
+Instructions:
+1. Parse the input to identify emotion tags in square brackets [like this]
+2. Apply the emotion inside the brackets to your speech delivery
+3. Speak ONLY the text that comes AFTER the closing bracket ]
+4. Never vocalize the brackets or emotion word itself
+
+Example:
+Input: "[curiosity] Have you ever noticed..."
+Output: Speak "Have you ever noticed..." with curious tone
+
+Core rules:
+- Strip all content from opening [ to closing ] before speaking
+- Maintain exact wording of remaining text
+- Do not add, rephrase, or correct anything`;
+
   const response = await openai.chat.completions.create({
     model: "gpt-audio",
     modalities: ["text", "audio"],
@@ -144,19 +162,11 @@ export const createPodcastLineWithGptAudio = async (
     messages: [
       {
         role: "system",
-        content: `
-You are an expert audio generator. 
-Your sole function is to speak exactly the user’s text.
-
-Core behavior:
-- Repeat the user’s EXACT text verbatim.
-- Do not add, remove, rephrase, translate, or correct anything.
-- Do not repeat the emotion tag which is in brackets at the start of the text.
-`,
+        content: systemPrompt,
       },
       {
         role: "user",
-        content: `Repeat the exact same back to me: [${options.emotion}] ${options.conversation}`,
+        content: `${options.conversation}`,
       },
     ],
   });
