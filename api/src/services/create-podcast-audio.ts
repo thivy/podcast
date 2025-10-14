@@ -8,6 +8,7 @@ import {
 } from "../azure-services/azure-openai";
 import { synthesizeSpeechFromSsml } from "../azure-services/azure-speech";
 import { uploadBufferToBlob } from "../azure-services/azure-storage";
+import { PureNodeAudioMerger } from "../common/audio-merger";
 import { PodcastScriptItem, VoiceName } from "./models";
 
 // Input type for the activity
@@ -72,6 +73,7 @@ export async function writeWavFileToLocal(
 
 export type GptAudioOptions = {
   voice: VoiceName;
+  emotion: string; // emotion tag to prepend in brackets, e.g. "[cheerful]"
   conversation: string;
 };
 
@@ -79,27 +81,39 @@ export const createPodcastWithGptAudio = async (options: {
   script: PodcastScriptItem[];
 }) => {
   const bufferArray: string[] = [];
+
   const script = options.script;
   for (let i = 0; i < script.length; i++) {
     const line = script[i];
-    console.log(`Generating audio for line ${i + 1}/${script.length}`);
     for (let j = 0; j < line.conversation.length; j++) {
       const conversation = line.conversation[j];
       const audioData = await createPodcastLineWithGptAudio({
         voice: line.speaker,
         conversation: conversation.content,
-        writeToDisk: true,
+        emotion: conversation.emotion || "neutral",
       });
+      const merger = new PureNodeAudioMerger();
       bufferArray.push(audioData.base64);
+      const mergedBase64 = merger.merge(bufferArray);
+      const merged = Buffer.from(mergedBase64, "base64");
+      const outputFileName = `podcast-${randomUUID()}.wav`;
+      await writeWavFileToLocal(
+        merged,
+        path.join("output", outputFileName)
+      ).catch(console.error);
     }
   }
+  const merger = new PureNodeAudioMerger();
+  const mergedBase64 = merger.merge(bufferArray);
+  const merged = Buffer.from(mergedBase64, "base64");
 
-  const joined = bufferArray.join("");
   const outputFileName = `podcast-${randomUUID()}.wav`;
-  const blobUrl = await uploadBufferToBlob(
-    Buffer.from(joined, "base64"),
-    outputFileName
+  const blobUrl = await uploadBufferToBlob(merged, outputFileName);
+
+  writeWavFileToLocal(merged, path.join("output", outputFileName)).catch(
+    console.error
   );
+
   return blobUrl;
 };
 
@@ -110,8 +124,6 @@ export type CreatePodcastLineWithGptAudioResult = {
 };
 
 export type CreatePodcastLineWithGptAudioOptions = GptAudioOptions & {
-  /** If true (default), write a .wav file locally */
-  writeToDisk?: boolean;
   /** Optional explicit output directory (default: output) */
   outputDir?: string;
   /** Optional file name (will be suffixed .wav if missing) */
@@ -125,7 +137,6 @@ export const createPodcastLineWithGptAudio = async (
     deployment: AZURE_OPENAI_AUDIO_MODEL_NAME(),
   });
 
-  console.log("Creating GPT audio with voice:", options.conversation);
   const response = await openai.chat.completions.create({
     model: "gpt-audio",
     modalities: ["text", "audio"],
@@ -140,23 +151,17 @@ Your sole function is to speak exactly the user’s text.
 Core behavior:
 - Repeat the user’s EXACT text verbatim.
 - Do not add, remove, rephrase, translate, or correct anything.
-- Do not repeat the emotion tag. `,
+- Do not repeat the emotion tag which is in brackets at the start of the text.
+`,
       },
       {
         role: "user",
-        content: `Repeat the exact same back to me: ${options.conversation}`,
+        content: `Repeat the exact same back to me: [${options.emotion}] ${options.conversation}`,
       },
     ],
   });
 
   const base64 = response.choices[0].message.audio.data;
-
-  if (options.writeToDisk !== false) {
-    const writeResult = await writeToDisk(base64, {
-      fileName: options.fileName,
-      outputDir: options.outputDir,
-    });
-  }
 
   return { base64 };
 };

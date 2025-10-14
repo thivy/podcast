@@ -27,7 +27,7 @@ export const podcastOrchestratorAgent: OrchestrationHandler = function* (
 
       input.scriptContent = insights.result?.contents[0].markdown || "";
     }
-    input.linesPerSpeaker = 2;
+
     setupStatus(context, "WRITING_SCRIPT");
     const podcastScript: PodcastScript = yield context.df.callActivity(
       scriptWriterAgent.name,
@@ -44,6 +44,11 @@ export const podcastOrchestratorAgent: OrchestrationHandler = function* (
     const audioInputData: AudioAgentInput = {
       script: podcastScript.script,
     };
+
+    console.log(
+      "Calling audio agent with input:",
+      JSON.stringify(audioInputData)
+    );
 
     const audio: string = yield context.df.callActivity(
       audioAgent.name,
