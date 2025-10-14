@@ -3,7 +3,7 @@ import { ActivityHandler } from "durable-functions";
 import {
   SpeechSynthInput,
   createPodcastAudioFromSsmlToBlob,
-} from "../services/create-podcast-audio";
+} from "../services/create-podcast-with-azure-speech";
 
 export const azureSpeechAgent: ActivityHandler = async (
   input: SpeechSynthInput

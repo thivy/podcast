@@ -1,19 +1,19 @@
 import * as df from "durable-functions";
 import { ActivityHandler } from "durable-functions";
-import { createPodcastWithGptAudio } from "../services/create-podcast-audio";
+import { createPodcastGptAudio } from "../services/create-podcast-with-gpt-audio";
 import { PodcastScriptItem } from "../services/models";
 
 export type AudioAgentInput = {
   script: PodcastScriptItem[];
 };
 
-export const audioAgent: ActivityHandler = async (
+export const gptAudioAgent: ActivityHandler = async (
   input: AudioAgentInput
 ): Promise<string> => {
-  const audio = await createPodcastWithGptAudio({
+  const { blobName } = await createPodcastGptAudio({
     script: input.script,
   });
-  return audio;
+  return blobName;
 };
 
-df.app.activity(audioAgent.name, { handler: audioAgent });
+df.app.activity(gptAudioAgent.name, { handler: gptAudioAgent });

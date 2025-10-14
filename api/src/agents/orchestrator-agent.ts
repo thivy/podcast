@@ -2,8 +2,8 @@ import * as df from "durable-functions";
 import { OrchestrationContext, OrchestrationHandler } from "durable-functions";
 import { AnalyzeResult } from "../azure-services/azure-content-understanding";
 import { PodcastScript, PodcastStatus, RequestBody } from "../services/models";
-import { audioAgent, AudioAgentInput } from "./audio-agent";
 import { contentExtractorAgent } from "./content-extractor-agent";
+import { AudioAgentInput, gptAudioAgent } from "./gpt-audio-agent";
 import { scriptWriterAgent } from "./script-writer-agent";
 
 const setupStatus = (context: OrchestrationContext, status: PodcastStatus) => {
@@ -34,24 +34,13 @@ export const podcastOrchestratorAgent: OrchestrationHandler = function* (
       input
     );
 
-    // setupStatus(context, "CONVERTING_SSML");
-    // const ssml = yield context.df.callActivity(
-    //   ssmlConvertAgent.name,
-    //   podcastScript.script
-    // );
-
     setupStatus(context, "CREATING_AUDIO");
     const audioInputData: AudioAgentInput = {
       script: podcastScript.script,
     };
 
-    console.log(
-      "Calling audio agent with input:",
-      JSON.stringify(audioInputData)
-    );
-
     const audio: string = yield context.df.callActivity(
-      audioAgent.name,
+      gptAudioAgent.name,
       audioInputData
     );
 
