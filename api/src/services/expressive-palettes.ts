@@ -34,10 +34,10 @@ export const getExpressivePaletteByName = (name: string): string => {
   }
 
   return `
-  Delivery: ${palette.delivery}
-  Voice: ${palette.voice}
-  Tone: ${palette.tone}
-  Pronunciation: ${palette.pronunciation}
+  Delivery: ${palette.delivery} \n\n
+  Voice: ${palette.voice} \n\n
+  Tone: ${palette.tone} \n\n
+  Pronunciation: ${palette.pronunciation} \n\n
   `;
 };
 

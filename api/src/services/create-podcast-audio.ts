@@ -9,6 +9,7 @@ import {
 import { synthesizeSpeechFromSsml } from "../azure-services/azure-speech";
 import { uploadBufferToBlob } from "../azure-services/azure-storage";
 import { PureNodeAudioMerger } from "../common/audio-merger";
+import { getExpressivePaletteByName } from "./expressive-palettes";
 import { PodcastScriptItem, VoiceName } from "./models";
 
 // Input type for the activity
@@ -75,12 +76,25 @@ export type GptAudioOptions = {
   voice: VoiceName;
   emotion: string; // emotion tag to prepend in brackets, e.g. "[cheerful]"
   conversation: string;
+  history?: ConversationHistoryEntry[];
+};
+
+export type CreatePodcastLineWithGptAudioResult = {
+  base64: string; // raw base64 wav (no data URI prefix)
+};
+
+export type ConversationHistoryEntry = {
+  speaker: VoiceName;
+  content: string;
+  emotion: string;
 };
 
 export const createPodcastWithGptAudio = async (options: {
   script: PodcastScriptItem[];
 }) => {
   const bufferArray: string[] = [];
+  const history: ConversationHistoryEntry[] = [];
+  const merger = new PureNodeAudioMerger();
 
   const script = options.script;
 
@@ -92,8 +106,8 @@ export const createPodcastWithGptAudio = async (options: {
         voice: line.speaker,
         conversation: conversation.content,
         emotion: conversation.emotion || "neutral",
+        history,
       });
-      const merger = new PureNodeAudioMerger();
       bufferArray.push(audioData.base64);
       const mergedBase64 = merger.merge(bufferArray);
       const merged = Buffer.from(mergedBase64, "base64");
@@ -102,9 +116,13 @@ export const createPodcastWithGptAudio = async (options: {
         merged,
         path.join("output", outputFileName)
       ).catch(console.error);
+      history.push({
+        speaker: line.speaker,
+        content: conversation.content,
+        emotion: conversation.emotion || "neutral",
+      });
     }
   }
-  const merger = new PureNodeAudioMerger();
   const mergedBase64 = merger.merge(bufferArray);
   const merged = Buffer.from(mergedBase64, "base64");
 
@@ -118,25 +136,21 @@ export const createPodcastWithGptAudio = async (options: {
   return blobUrl;
 };
 
-export type CreatePodcastLineWithGptAudioResult = {
-  base64: string; // raw base64 wav (no data URI prefix)
-  filePath?: string; // absolute path to written wav file (if write succeeded)
-  bytes?: number; // size in bytes (if write succeeded)
-};
-
-export type CreatePodcastLineWithGptAudioOptions = GptAudioOptions & {
-  /** Optional explicit output directory (default: output) */
-  outputDir?: string;
-  /** Optional file name (will be suffixed .wav if missing) */
-  fileName?: string;
-};
-
 export const createPodcastLineWithGptAudio = async (
-  options: CreatePodcastLineWithGptAudioOptions
+  options: GptAudioOptions
 ): Promise<CreatePodcastLineWithGptAudioResult> => {
   const openai = azureOpenAI({
     deployment: AZURE_OPENAI_AUDIO_MODEL_NAME(),
   });
+
+  const emotionDescription = `
+ You should not mention the emotion [${
+   options.emotion
+ }] at all instead here is how you must speak the emotion out [${
+    options.emotion
+  }] \n
+${getExpressivePaletteByName(options.emotion)}
+`;
 
   const systemPrompt = `You are an expert audio generator that processes emotion-tagged text.
 
@@ -145,15 +159,33 @@ Instructions:
 2. Apply the emotion inside the brackets to your speech delivery
 3. Speak ONLY the text that comes AFTER the closing bracket ]
 4. Never vocalize the brackets or emotion word itself
+6. DO NOT acknowledge the emotion tag, just speak the text with that emotion
 
 Example:
 Input: "[curiosity] Have you ever noticed..."
 Output: Speak "Have you ever noticed..." with curious tone
 
+Delivery Guidelines:
+${emotionDescription}
+
 Core rules:
 - Strip all content from opening [ to closing ] before speaking
 - Maintain exact wording of remaining text
 - Do not add, rephrase, or correct anything`;
+
+  const historyMessages = (options.history ?? []).map((entry) => ({
+    role: "user" as const,
+    content: `${entry.speaker}: ${
+      entry.emotion && entry.emotion.trim().length > 0
+        ? `[${entry.emotion}] ${entry.content}`
+        : entry.content
+    }`,
+  }));
+
+  const currentPrompt =
+    options.emotion && options.emotion.trim().length > 0
+      ? ` [${options.emotion}] ${options.conversation}`
+      : options.conversation;
 
   const response = await openai.chat.completions.create({
     model: "gpt-audio",
@@ -164,9 +196,10 @@ Core rules:
         role: "system",
         content: systemPrompt,
       },
+      ...historyMessages,
       {
         role: "user",
-        content: `${options.conversation}`,
+        content: currentPrompt,
       },
     ],
   });
