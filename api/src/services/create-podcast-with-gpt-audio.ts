@@ -79,20 +79,21 @@ export const createPodcastScriptLineAudio = async (
     emotion,
   });
 
-  const historyMessages = history.map((entry) => ({
-    role: "user" as const,
-    name: voice,
-    content: `${entry.voice}: ${
-      entry.emotion && entry.emotion.trim().length > 0
-        ? `[${entry.emotion}] ${entry.conversation}`
-        : entry.conversation
-    }`,
-  }));
+  let historyMessages = [];
 
-  const currentPrompt =
-    emotion && emotion.trim().length > 0
-      ? ` [${emotion}] ${conversation}`
-      : conversation;
+  for (const entry of history) {
+    historyMessages.push({
+      role: "user",
+      name: entry.voice,
+      content: entry.conversation,
+    });
+
+    historyMessages.push({
+      role: "assistant",
+      name: entry.voice,
+      content: entry.conversation,
+    });
+  }
 
   const response = await openai.chat.completions.create({
     model: "gpt-audio",
@@ -108,7 +109,7 @@ export const createPodcastScriptLineAudio = async (
       {
         role: "user",
         name: voice,
-        content: currentPrompt,
+        content: conversation,
       },
     ],
   });
