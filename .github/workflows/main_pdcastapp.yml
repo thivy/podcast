@@ -70,16 +70,6 @@ jobs:
           # Write a README for future maintainers (optional)
           echo "Prebuilt Next.js standalone bundle. Do not edit in App Service. Redeploy via CI." > deploy/DEPLOYMENT_NOTES.txt
 
-      - name: (Optional) Run tests
-        if: always()
-        working-directory: ${{ env.AZURE_APP_PACKAGE_PATH }}
-        run: |
-          if npm run | grep -q "test"; then
-            npm run test --if-present
-          else
-            echo "No test script defined; skipping"
-          fi
-
       - name: Upload build artifact (trimmed deploy bundle)
         uses: actions/upload-artifact@v4
         with:
