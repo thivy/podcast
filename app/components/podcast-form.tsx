@@ -41,7 +41,11 @@ export function PodcastForm() {
   const [linesPerSpeaker, setLinesPerSpeaker] = useState<number | undefined>();
   const [speakers, setSpeakers] = useState<VoiceName[]>(["alloy", "ash"]);
   const [podcastStatus, setPodcastStatus] = useState<PodcastStatus>({ status: "idle" });
-  const [apiUrl, setApiUrl] = useState("http://localhost:7071");
+  const [apiUrl, setApiUrl] = useState(
+    typeof window !== "undefined" && process.env.NEXT_PUBLIC_API_URL 
+      ? process.env.NEXT_PUBLIC_API_URL 
+      : "http://localhost:7071"
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSpeaker = (voice: VoiceName) => {

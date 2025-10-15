@@ -24,36 +24,33 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Podcast Creation Form
 
-The home page now contains a Podcast Creation form built with shadcn-inspired UI components and validated by `zod`.
+The home page contains a Podcast Creation form built with shadcn-inspired UI components and validated by `zod`.
 
 ### Features
 
-- Multi-select speakers (must choose exactly two of: Drift, Lumen, Thorn, Quill)
-- Provide one (or more) of: URL, uploaded file, or custom instruction (at least one required)
-- Choose tone (formal, informal, humorous, energetic)
-- Choose style (conversational, interview, debate, educational)
-- Set number of lines per speaker (1–10, default 3)
-- Optional custom instruction text area
-- Client converts uploaded file to a `Buffer` before validation
+- **Configurable API URL** - Set the backend API endpoint URL (defaults to http://localhost:7071)
+- **Multiple content sources** - Provide URL, upload file, or use custom instruction (at least one required)
+- **Voice selection** - Choose 1-2 speakers from 10 available voices (alloy, ash, ballad, coral, echo, sage, shimmer, verse, marin, cedar)
+- **Style options** - Select from 7 podcast styles: conversational, interview, debate, educational, stand-up-comedy, storytelling, documentary
+- **Tone options** - Choose from 4 tones: formal, informal, humorous, energetic
+- **Optional parameters** - Set number of lines per speaker
+- **Real-time status updates** - Polls the API for podcast generation status
+- **Audio playback** - Plays completed podcast directly in the browser
 
 ### Schema
 
-The payload logged to the console conforms to this schema:
+The payload conforms to this schema:
 
 ```ts
 export const RequestBodySchema = z
   .object({
     url: z.string().url().optional(),
     data: z.instanceof(Buffer).optional(),
-    style: StyleSchema.optional().default("conversational"),
-    tone: ToneSchema.optional().default("formal"),
+    style: StyleSchema.optional().default("stand-up-comedy"),
+    tone: ToneSchema.optional().default("humorous"),
     instruction: z.string().optional(),
-    linesPerSpeaker: z.number().min(1).max(10).default(3),
-    speakers: z
-      .array(VoiceNameSchema)
-      .min(1)
-      .max(2)
-      .default(["Drift", "Lumen"]),
+    linesPerSpeaker: z.number().optional(),
+    speakers: z.array(VoiceNameSchema).min(1).max(2).default(["alloy", "ash"]),
     scriptContent: z.string().default(""),
   })
   .refine((data) => data.url || data.data || data.instruction, {
@@ -61,18 +58,30 @@ export const RequestBodySchema = z
   });
 ```
 
-Note: Although the schema allows a minimum of 1 speaker, the UI enforces selecting exactly 2 to satisfy the product requirement.
+### API Integration
+
+The form integrates with the Azure Functions backend:
+
+1. **POST /api/podcast** - Submits podcast creation request with multipart form data
+2. **Polling** - Uses the `statusQueryGetUri` from the response to poll for completion
+3. **GET /api/podcast/{name}** - Retrieves the generated audio file once completed
 
 ### Running
 
-Install new deps then start dev server:
+Install dependencies and start the dev server:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the console in your browser devtools and submit the form to inspect the validated payload.
+Optionally, configure the API URL by creating a `.env.local` file:
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:7071
+```
+
+Open [http://localhost:3000](http://localhost:3000) to see the form.
 
 To learn more about Next.js, take a look at the following resources:
 
