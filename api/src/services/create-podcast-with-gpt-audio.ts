@@ -105,7 +105,7 @@ export const createPodcastScriptLineAudio = async (
         name: "audio_generator",
         content: systemPrompt,
       },
-      ...historyMessages,
+      // ...historyMessages,
       {
         role: "user",
         name: voice,
@@ -120,32 +120,19 @@ export const createPodcastScriptLineAudio = async (
 };
 
 const systemInstruction = ({ emotion }: { emotion: string }) => {
-  const systemInstruction = `You are an expert audio generator that processes emotion-tagged text. \n\n
+  const systemInstruction = `You are an expert audio generator for podcasts. \n\n
 
-<instructions>
-1. Parse the input to identify emotion tags in square brackets [like this] \n\n
-2. Apply the emotion inside the brackets to your speech delivery \n\n
-3. Speak ONLY the text that comes AFTER the closing bracket ]\n\n
-4. Never vocalize the brackets or emotion word itself \n\n
-6. DO NOT acknowledge the emotion tag, just speak the text with that emotion \n\n
-</instructions>
+- This podcast has a style of stand-up-comedy \n\n
+- Speak ONLY the text that user has provided\n\n
+- DO NOT acknowledge the user, just speak the text with that emotion \n\n
 
-<example>
-Example:
-Input: "[curiosity] Have you ever noticed..." \n\n
-Output: Speak "Have you ever noticed..." with curious tone \n\n
-</example>
 
 <delivery_guidelines>
-You should not mention the emotion [${emotion}] at all instead here is how you must speak the emotion out [${emotion}] \n\n
+You must deliver this with \n\n
 ${getExpressivePaletteByName(emotion)}
 </delivery_guidelines>
 
-<core_rules>
-1. Strip all content from opening [ to closing ] before speaking \n\n
-2. Maintain exact wording of remaining text
-3. Do not add, rephrase, or correct anything
-</core_rules>`;
+`;
 
   return systemInstruction;
 };
