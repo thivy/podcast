@@ -34,8 +34,14 @@ const podcastHttpStart: HttpHandler = async (
     podcastOrchestratorAgent.name,
     { input: requestBody }
   );
-
-  return client.createCheckStatusResponse(request, instanceId);
+  return {
+    ...client.createCheckStatusResponse(request, instanceId),
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  };
 };
 
 app.http(podcastHttpStart.name, {
