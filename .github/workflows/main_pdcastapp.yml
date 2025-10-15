@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_APP_PACKAGE_PATH: "api" 
+  AZURE_APP_PACKAGE_PATH: "app" 
   NODE_VERSION: "22.x"
 
 jobs:
