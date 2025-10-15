@@ -1,4 +1,4 @@
-name: Build and deploy Node.js app to Azure Web App - pdcastapp
+name: Podcast Web App
 
 on:
   push:
@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_APP_PACKAGE_PATH: "app" 
-  NODE_VERSION: "22.x"
+  AZURE_APP_PACKAGE_PATH: "app"
+  NODE_VERSION: "20.x" # Use an LTS version supported by Azure App Service & Next.js 15
 
 jobs:
   build:
@@ -21,23 +21,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "${{ env.AZURE_APP_PACKAGE_PATH }}/package-lock.json"
 
-      - name: npm install, build, and test
+      - name: Install dependencies
+        working-directory: ${{ env.AZURE_APP_PACKAGE_PATH }}
+        run: npm install
+
+      - name: Build (Next.js standalone)
+        working-directory: ${{ env.AZURE_APP_PACKAGE_PATH }}
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
         run: |
-          pushd './${{ env.AZURE_APP_PACKAGE_PATH }}'
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+          npm run build
+          # Verify expected standalone output exists early
+          if [ ! -f .next/standalone/server.js ]; then
+            echo "ERROR: .next/standalone/server.js not found. Check next.config.ts for output: 'standalone' and build logs." >&2
+            ls -R .next || true
+            exit 1
+          fi
 
-      - name: Upload artifact for deployment job
+      - name: (Optional) Run tests
+        if: always()
+        working-directory: ${{ env.AZURE_APP_PACKAGE_PATH }}
+        run: |
+          if npm run | grep -q "test"; then
+            npm run test --if-present
+          else
+            echo "No test script defined; skipping"
+          fi
+
+      - name: Upload build artifact (app only)
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: ${{ env.AZURE_APP_PACKAGE_PATH }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -51,7 +73,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -59,11 +81,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7058553E33DE44F89E66EEBA72FE6843 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_4DD165BE287748EABBFF1C4DD0D8AB19 }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: "Deploy to Azure Web App"
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'pdcastapp'
-          slot-name: 'Production'
-          package: .
-          
+          app-name: "pdcastapp"
+          slot-name: "Production"
+          package: ${{ env.AZURE_APP_PACKAGE_PATH }} # Deploy only the Next.js app contents so .next is at site root
