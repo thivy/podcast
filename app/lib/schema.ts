@@ -1,8 +1,27 @@
 import { z } from "zod";
 
-export const VoiceNameSchema = z.enum(["Drift", "Lumen", "Thorn", "Quill"], {
-  description: "Allowed speaker voice names",
-});
+export const VoiceNameSchema = z.enum([
+  "alloy",
+  "ash",
+  "ballad",
+  "coral",
+  "echo",
+  "sage",
+  "shimmer",
+  "verse",
+  "marin",
+  "cedar",
+]);
+
+export const StyleSchema = z.enum([
+  "conversational",
+  "interview",
+  "debate",
+  "educational",
+  "stand-up-comedy",
+  "storytelling",
+  "documentary",
+]);
 
 export const ToneSchema = z.enum([
   "formal",
@@ -11,27 +30,15 @@ export const ToneSchema = z.enum([
   "energetic",
 ]);
 
-export const StyleSchema = z.enum([
-  "conversational",
-  "interview",
-  "debate",
-  "educational",
-]);
-
-// IMPORTANT: Keeping schema exactly as provided by user request.
 export const RequestBodySchema = z
   .object({
     url: z.string().url().optional(),
     data: z.instanceof(Buffer).optional(),
-    style: StyleSchema.optional().default("conversational"),
-    tone: ToneSchema.optional().default("formal"),
+    style: StyleSchema.optional().default("stand-up-comedy"),
+    tone: ToneSchema.optional().default("humorous"),
     instruction: z.string().optional(),
-    linesPerSpeaker: z.number().min(1).max(10).default(3),
-    speakers: z
-      .array(VoiceNameSchema)
-      .min(1)
-      .max(2)
-      .default(["Drift", "Lumen"]),
+    linesPerSpeaker: z.number().optional(),
+    speakers: z.array(VoiceNameSchema).min(1).max(2).default(["alloy", "ash"]),
     scriptContent: z.string().default(""),
   })
   .refine((data) => data.url || data.data || data.instruction, {
