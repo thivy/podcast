@@ -45,6 +45,31 @@ jobs:
             exit 1
           fi
 
+      - name: Create trimmed deployment bundle
+        working-directory: ${{ env.AZURE_APP_PACKAGE_PATH }}
+        run: |
+          set -e
+          mkdir -p deploy
+          # Copy standalone output (which includes minimal node_modules and server.js)
+          cp -R .next/standalone/* deploy/
+          # Ensure static assets + public are present
+          mkdir -p deploy/.next
+          cp -R .next/static deploy/.next/static
+          if [ -d public ]; then cp -R public deploy/public; fi
+          # Include .next/BUILD_ID for ISR / revalidation consistency
+          if [ -f .next/BUILD_ID ]; then cp .next/BUILD_ID deploy/.next/; fi
+          # Copy package.json & lock file for clarity (not strictly needed for runtime)
+          cp package.json deploy/
+          if [ -f package-lock.json ]; then cp package-lock.json deploy/; fi
+          # List final structure for debugging
+          echo "Deployment bundle contents:"; (cd deploy && find . -maxdepth 4 -type f | sort)
+          if [ ! -f deploy/server.js ]; then
+            echo "ERROR: deploy/server.js not found after copy. Failing." >&2
+            exit 1
+          fi
+          # Write a README for future maintainers (optional)
+          echo "Prebuilt Next.js standalone bundle. Do not edit in App Service. Redeploy via CI." > deploy/DEPLOYMENT_NOTES.txt
+
       - name: (Optional) Run tests
         if: always()
         working-directory: ${{ env.AZURE_APP_PACKAGE_PATH }}
@@ -55,11 +80,11 @@ jobs:
             echo "No test script defined; skipping"
           fi
 
-      - name: Upload build artifact (app only)
+      - name: Upload build artifact (trimmed deploy bundle)
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ${{ env.AZURE_APP_PACKAGE_PATH }}
+          path: ${{ env.AZURE_APP_PACKAGE_PATH }}/deploy
 
   deploy:
     runs-on: ubuntu-latest
@@ -87,4 +112,4 @@ jobs:
         with:
           app-name: "pdcastapp"
           slot-name: "Production"
-          package: ${{ env.AZURE_APP_PACKAGE_PATH }} # Deploy only the Next.js app contents so .next is at site root
+          package: . # Artifact root already is trimmed deploy bundle with server.js at root
