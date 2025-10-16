@@ -6,7 +6,7 @@ import {
 import { uploadBufferToBlob } from "../azure-services/azure-storage";
 import { PureNodeAudioMerger } from "../common/audio-merger";
 import { getExpressivePaletteByName } from "./expressive-palettes";
-import { PodcastScriptItem, VoiceName } from "./models";
+import { PodcastScriptItem, RequestBody, VoiceName } from "./models";
 
 export type PodcastSpeakerLine = {
   voice: VoiceName;
@@ -18,6 +18,7 @@ export type ConversationHistory = PodcastSpeakerLine[];
 
 type AudioOptions = {
   script: PodcastScriptItem[];
+  requestOptions: RequestBody;
 };
 
 export const createPodcastGptAudio = async (options: AudioOptions) => {
@@ -42,6 +43,7 @@ export const createPodcastGptAudio = async (options: AudioOptions) => {
       const audioData = await createPodcastScriptLineAudio({
         history,
         speakerLine: speaker,
+        requestOptions: options.requestOptions,
       });
 
       bufferArray.push(audioData.base64);
@@ -62,6 +64,7 @@ export const createPodcastGptAudio = async (options: AudioOptions) => {
 type ScriptLineOptions = {
   speakerLine: PodcastSpeakerLine;
   history: ConversationHistory;
+  requestOptions: RequestBody;
 };
 
 export const createPodcastScriptLineAudio = async (
@@ -77,6 +80,7 @@ export const createPodcastScriptLineAudio = async (
 
   const systemPrompt = systemInstruction({
     emotion,
+    requestOptions: options.requestOptions,
   });
 
   let historyMessages = [];
@@ -105,7 +109,7 @@ export const createPodcastScriptLineAudio = async (
         name: "audio_generator",
         content: systemPrompt,
       },
-      // ...historyMessages,
+      ...historyMessages,
       {
         role: "user",
         name: voice,
@@ -119,13 +123,19 @@ export const createPodcastScriptLineAudio = async (
   return { base64 };
 };
 
-const systemInstruction = ({ emotion }: { emotion: string }) => {
+const systemInstruction = ({
+  emotion,
+  requestOptions,
+}: {
+  emotion: string;
+  requestOptions: RequestBody;
+}) => {
   const systemInstruction = `You are an expert audio generator for podcasts. \n\n
 
-- This podcast has a style of stand-up-comedy \n\n
+- This podcast has a style of ${requestOptions.style} \n\n
+- This podcast has an overall tone of ${requestOptions.tone} \n\n
 - Speak ONLY the text that user has provided\n\n
 - DO NOT acknowledge the user, just speak the text with that emotion \n\n
-
 
 <delivery_guidelines>
 You must deliver this with \n\n

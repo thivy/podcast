@@ -37,6 +37,7 @@ export const podcastOrchestratorAgent: OrchestrationHandler = function* (
     setupStatus(context, "CREATING_AUDIO");
     const audioInputData: AudioAgentInput = {
       script: podcastScript.script,
+      requestOptions: input,
     };
 
     const audio: string = yield context.df.callActivity(

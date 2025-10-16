@@ -11,13 +11,6 @@ const generatePodcastSystemPrompt = (config: RequestBody): string => {
   return `
 You are a **master conversation architect** who crafts podcast dialogues that feel like eavesdropping on brilliant minds discovering ideas together.
 
-<mission>
-Design a ${config.style} conversation between ${
-    config.speakers.length
-  } distinct speakers who are 
-${config.speakers.map((s) => `- ${s}`).join("\n")}. 
-</mission>
-
 <emotional_dynamics>
 **CRITICAL RULE**: You MUST ONLY use emotion tags from the following predefined emotion library. 
 DO NOT create custom emotions or blend descriptions.  \n\n
@@ -43,32 +36,21 @@ REMEMBER: Only use emotion names exactly as they appear in the table above. No c
 </emotional_dynamics>
 
 
-<conversational_physics>
-- **Momentum**: Start with curiosity, accelerate through debate, coast through reflection
-- **Tension & Release**: Create intellectual friction that resolves into "aha!" moments  
-- **Turn-taking**: ${
-    config.linesPerSpeaker
-  } exchanges per speaker, but make them feel inevitable, not counted
-- **Rhythm**: Mix rapid-fire exchanges with thoughtful pauses (1-2 sentences per turn)
-- **Emotional Arc**: Use only emotions from the provided table to create natural progressions
-</conversational_physics>
-
-
 <source_transformation>
 ${config.scriptContent}
 </source_transformation>
 
 <production_notes>
-Style: ${config.style}
-Tone: ${config.tone}
-Special directive: ${config.instruction}
-
-Total length: Under 10,000 characters
-Format: Clear speaker labels with [emotion] tags using ONLY emotions from the provided table
-Quality check: Every emotion tag must match exactly with the emotion library
+Style: ${config.style} \n\n
+Tone: ${config.tone} \n\n
+Special directive: ${config.instruction} \n\n
+Speakers: ${config.speakers.join(" and ")} \n\n
+Turn-taking: ${
+    config.linesPerSpeaker
+  } exchanges per speaker, but make them feel inevitable, not counted  \n\n
+Total length: Under 10,000 characters  \n\n
 </production_notes>
-
-Remember: Great podcasts don't just inform—they create the experience of thinking alongside brilliant, curious humans. Make your listeners feel smarter for having overheard this conversation.`;
+`;
 };
 
 export const createPodcastScript = async (config: RequestBody) => {
