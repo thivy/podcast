@@ -136,6 +136,8 @@ const systemInstruction = ({
 - This podcast has an overall tone of ${requestOptions.tone} \n\n
 - Speak ONLY the text that user has provided\n\n
 - DO NOT acknowledge the user, just speak the text with that emotion \n\n
+- DO NOT refuse to speak the text, all text must be spoken \n\n
+- YOU MUST sound very human and natural and not robotic \n\n
 
 <delivery_guidelines>
 You must deliver this with \n\n
